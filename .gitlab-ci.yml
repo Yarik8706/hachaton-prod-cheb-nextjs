@@ -1,0 +1,60 @@
+stages:
+  - build
+  - publish
+  - deploy
+
+variables:
+  IMAGE: "$CI_REGISTRY_IMAGE:latest"
+  DOCKER_HOST: tcp://docker:2375
+  DOCKER_DRIVER: overlay2
+
+# ---------- BUILD ----------
+dev-build:
+  stage: build
+  image:
+    name: gcr.io/kaniko-project/executor:debug
+    entrypoint: [""]
+  variables:
+    DOCKER_CONFIG: /kaniko/.docker/
+  script:
+    - mkdir -p /kaniko/.docker
+    - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$DEV_DOCKER_USERNAME\",\"password\":\"$DEV_DOCKER_PASSWORD\"}}}" > /kaniko/.docker/config.json
+    - /kaniko/executor --context $CI_PROJECT_DIR --destination $IMAGE --verbosity info
+
+
+  rules:
+    - if: $CI_COMMIT_BRANCH == "master"
+
+# ---------- PUBLISH ----------
+dev-publish:
+  stage: publish
+  image:
+    name: gcr.io/kaniko-project/executor:debug
+    entrypoint: [""]
+  variables:
+    DOCKER_CONFIG: /kaniko/.docker/
+  script:
+    - mkdir -p /kaniko/.docker
+    - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$DEV_DOCKER_USERNAME\",\"password\":\"$DEV_DOCKER_PASSWORD\"}}}" > /kaniko/.docker/config.json
+    - |
+      /kaniko/executor \
+        --context $CI_PROJECT_DIR \
+        --dockerfile $CI_PROJECT_DIR/Dockerfile \
+        --destination "$CI_REGISTRY_IMAGE:latest" \
+        --destination "$IMAGE" \
+        --verbosity info
+
+  rules:
+    - if: $CI_COMMIT_BRANCH == "master"
+
+# ---------- DEPLOY (через SSH) ----------
+dev-deploy:
+  stage: deploy
+  trigger:
+    project: team-24/infra-deploy
+    branch: master
+    strategy: depend
+
+  rules:
+    - if: $CI_COMMIT_BRANCH == "master"
+

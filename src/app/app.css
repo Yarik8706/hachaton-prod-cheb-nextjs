@@ -1,0 +1,30 @@
+﻿@layer components {
+    .section {
+        @apply flex flex-1 items-center flex-col h-[100vh]
+    }
+}
+
+* {
+    box-sizing: border-box;
+}
+
+@theme {
+    --bg-color-light: #f6f7f8;
+    --bg-color-dark: #212121;
+    --main-color-hover: #ffcd33;
+    --main-color-hover-dark: theme("colors.yellow.500");
+    --main-color: #ffdd2d;
+    --main-color-dark: #FFDD2D;
+    --second-background-color: #f1eee8;
+    --form-background-color: #E9E0D2;
+}
+
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+input[type=number] {
+    -moz-appearance: textfield; /* Firefox */
+}
