@@ -3,7 +3,7 @@
 import { Button } from '@/components/ui/button'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useEffect } from 'react'
-import { CLIENT_ID, YANDEX_AUTH_URL } from '@/consts/consts'
+import { CLIENT_ID, HOME_URL, YANDEX_AUTH_URL } from '@/consts/consts'
 import { api } from '@/api/api'
 
 export default function YandexButton() {
@@ -16,10 +16,10 @@ export default function YandexButton() {
 
 		if (code) {
 			api
-				.post('/auth/get_token', { code })
+				.post(`/auth/oauth/authorize?code=${encodeURIComponent(code)}`)
 				.then(res => {
 					localStorage.setItem('access_token', res.data.access_token)
-					push('/')
+					push(HOME_URL)
 				})
 				.catch(err => console.error('Ошибка авторизации:', err))
 		}

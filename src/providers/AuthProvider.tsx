@@ -35,7 +35,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
     const token = localStorage.getItem("accessToken")
     if (token) {
       setIsAuth(true);
-      fetchProfile().catch(() => setIsAuth(false));
+      fetchProfile();
     }
   }
 

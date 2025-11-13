@@ -29,10 +29,7 @@ import { toast } from 'sonner'
 import { z } from 'zod'
 import {siteConfig} from "@/config/site.config";
 import {useAuth} from "@/providers/AuthProvider";
-import {useProfile} from "@/store/profile.store";
-import {usePartners} from "@/store/partners.store";
 
-// ✅ Добавлено поле fullname в схему валидации
 const formSchema = z.object({
 	username: z
 		.string({
@@ -47,8 +44,6 @@ const formSchema = z.object({
 export default function RegForm() {
 	const { push } = useRouter()
 	const {setToken, tokenUpdate} = useAuth();
-	const {fetchProfile} = useProfile()
-	const {fetchPartners} = usePartners()
 
 	const form = useForm<z.infer<typeof formSchema>>({
 		resolver: zodResolver(formSchema),
@@ -66,7 +61,6 @@ export default function RegForm() {
 				password: data.password,
 			}),
 		onSuccess: () => {
-			
 			toast('Успешная регистрация')
 			push('/home')
 		},

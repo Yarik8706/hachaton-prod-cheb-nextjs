@@ -6,7 +6,7 @@ import "./globals.css";
 import {siteConfig} from "@/config/site.config";
 import {Providers} from "@/providers/providers";
 import {Toaster} from "@/components/ui/sonner";
-import {Footer} from "@/components/layout/Footer";
+import AuthProvider from '@/providers/AuthProvider'
 
 const geistSans = Geist({
   variable: "--font-geist-sans",

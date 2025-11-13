@@ -32,6 +32,7 @@ import { toast } from 'sonner'
 import { z } from 'zod'
 import {siteConfig} from "@/config/site.config";
 import {useAuth} from "@/providers/AuthProvider";
+import { HOME_URL } from '@/consts/consts'
 
 const formSchema = z.object({
 	username: z
@@ -75,7 +76,7 @@ export default function AuthForm() {
 					setToken(accessToken);
 					tokenUpdate()
 				}
-				push('/home')
+				push(HOME_URL)
 				toast('Успешная регистрация')
 			})
 			.catch(err => {
