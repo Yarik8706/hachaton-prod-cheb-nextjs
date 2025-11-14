@@ -3,7 +3,6 @@
 const INTEREST_COLORS = [
 	"#FFD200", // tinkoff-yellow
 	"#27BFFF", // airlines
-	"#6A6A7C", // invest
 	"#4972CF", // premium
 	"#00B640", // business
 	"#FFDD2D", // tinkoff-brand
@@ -23,8 +22,6 @@ export default function UserInterests({ interests }: { interests: string[] }) {
 						Ваши интересы:
 					</div>
 				</div>
-
-				<div className="text-gray-400 text-xl">›</div>
 			</div>
 			{interests.map((item, idx) => {
 				const color = INTEREST_COLORS[idx % INTEREST_COLORS.length];
@@ -41,8 +38,6 @@ export default function UserInterests({ interests }: { interests: string[] }) {
 								{item}
 							</div>
 						</div>
-
-						<div className="text-gray-400 text-xl">›</div>
 					</div>
 				);
 			})}

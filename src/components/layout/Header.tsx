@@ -51,10 +51,10 @@ export function Header() {
           {!isAuth && <div className="flex flex-[2] justify-end gap-4">
             <Link href={'/register'}>
               <Button variant="secondary"
-                      className="hover:bg-gray-200 transition duration-300">Зарегистрироваться</Button>
+                      className="hover:bg-gray-200 transition duration-300 shadow-none">Зарегистрироваться</Button>
             </Link>
             <Link href={'/login'}>
-              <Button>Войти</Button>
+              <Button className="shadow-none">Войти</Button>
             </Link>
           </div>}
 

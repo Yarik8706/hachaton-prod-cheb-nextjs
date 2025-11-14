@@ -16,7 +16,7 @@ const Layout: React.FC<IProps> = ({ children }: IProps) => {
     <div className="bg-[var(--second-background-color)] min-h-[100vh]">
       <Header/>
       <>
-        <Container>
+        <Container className="px-2">
           <Suspense>
             {children}
           </Suspense>

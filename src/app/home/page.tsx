@@ -1,46 +1,30 @@
 ﻿"use client";
 
-import { Search } from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { useGSAP } from "@gsap/react";
-import { ChevronDown } from "lucide-react";
+import { Filter, Search } from 'lucide-react'
+import { useState } from 'react'
+import { ArticleFilterSheet } from '@/components/sheets/ArticleFilterSheet'
 
 export default function HomePage() {
-  useGSAP(() => {});
-
+  const [searching, setSearching] = useState(false)
+  const [showFilter, setShowFilter] = useState(false)
+  
+  
   return (
-    <div className="w-full flex flex-col px-4 pt-6 pb-20 min-h-screen bg-white">
-
-      {/* SEARCH BAR */}
+    <div className="w-full flex flex-col px-4 pt-6 pb-20 min-h-screen">
+      {!searching && <div className="text-2xl font-semibold mb-6">Новости</div>}
       <div className="flex items-center gap-3 w-full">
-        <div className="flex items-center bg-gray-100 rounded-xl px-4 py-3 flex-1">
+        <div className="flex items-center bg-[#e9ecf0] rounded-xl px-4 py-3 flex-1">
           <Search className="size-5 text-gray-500" />
           <input
             type="text"
+            onChange={(v
+            ) => setSearching(v.target.value != "")}
             placeholder="Введите строку поиска"
             className="ml-3 bg-transparent outline-none text-[15px] w-full"
           />
         </div>
 
-        {/* Ваш фильтр (оставлен как есть) */}
-        <button className="bg-yellow-400 hover:bg-yellow-500 transition rounded-xl p-3 flex items-center justify-center">
-          <Search className="text-black size-5" />
-        </button>
-      </div>
-
-      {/* FILTERS */}
-      <div className="flex gap-3 mt-5">
-        {/* Категории */}
-        <button className="flex items-center justify-between px-4 py-2 bg-gray-100 rounded-xl w-[50%] text-[15px] text-gray-700">
-          Все категории
-          <ChevronDown className="w-4 h-4 text-gray-500" />
-        </button>
-
-        {/* Период */}
-        <button className="flex items-center justify-between px-4 py-2 bg-gray-100 rounded-xl w-[50%] text-[15px] text-gray-700">
-          За всё время
-          <ChevronDown className="w-4 h-4 text-gray-500" />
-        </button>
+        <ArticleFilterSheet onSubmit={() => setShowFilter(false)}/>
       </div>
 
       {/* RESULTS */}
@@ -76,8 +60,8 @@ export default function HomePage() {
           <div className="text-gray-500 text-xs mt-4">14 нояб. 2025</div>
         </div>
 
-        {/* Ещё карточки можно рендерить так же */}
       </div>
+      
     </div>
   );
 }

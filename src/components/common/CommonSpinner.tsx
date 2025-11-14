@@ -4,13 +4,13 @@ import {Item, ItemContent, ItemMedia, ItemTitle} from "@/components/ui/item";
 import {Spinner} from "@/components/ui/spinner";
 
 interface IProps {
-  title: string
+  title: string,
+  variant?: 'muted' | 'default' | 'outline' | null | undefined;
 }
 
-export default function CommonSpinner({title}:IProps) {
-
+export default function CommonSpinner({title, variant = "muted"}:IProps) {
   return (
-    <Item variant="muted" className="my-1">
+    <Item variant={variant} className="my-1">
       <ItemMedia>
         <Spinner />
       </ItemMedia>
