@@ -1,7 +1,6 @@
 'use client'
 
 import Container from '@/components/common/container'
-import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import ProductIcon from '../common/ProductIcon'
 import {layoutConfig} from "@/config/layout.config";
@@ -9,6 +8,7 @@ import { usePathname } from 'next/navigation'
 import {cn} from "@/lib/utils";
 import {Button} from "@/components/ui/button";
 import {useAuth} from "@/providers/AuthProvider";
+import { siteConfig } from '@/config/site.config'
 
 export function Header() {
 
@@ -19,13 +19,13 @@ export function Header() {
 
   return (
     <header style={{height: layoutConfig.headerHeight}}
-            className={`gap-8 rounded-md bg-white p-5 shadow-md dark:bg-black hidden md:block`}>
+            className={`gap-8 bg-white shadow-sm p-5 dark:bg-black hidden md:block`}>
       <Container className='px-0'>
         <main className='flex items-center justify-between'>
           <div className="flex flex-[3] gap-8 justify-between">
             <Link href={'/'} className='flex flex-row items-center gap-2'>
               <ProductIcon className=""/>
-              <div className="font-bold">Доставка</div>
+              <div className="font-bold">{siteConfig.title}</div>
             </Link>
             {isAuth && (
               <div className="flex gap-10">

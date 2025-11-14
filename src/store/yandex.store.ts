@@ -1,17 +1,14 @@
 ﻿import { create } from "zustand";
 import { devtools } from "zustand/middleware";
-import { api } from "@/api/api";
-import {IProfile} from "@/store/types";
 
-
-interface ProfileStore {
+interface YandexStore {
 	loginUrl: string;
 	fetchLoginUrl: () => Promise<void>;
 }
 
-export const useYandexLogin = create<ProfileStore>()(
+export const useYandexLogin = create<YandexStore>()(
 	devtools((set) => ({
-		loginUrl: null,
+		loginUrl: "",
 		fetchLoginUrl: async () => {
 			
 		},

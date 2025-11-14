@@ -9,13 +9,12 @@
 }
 
 @theme {
-    --bg-color-light: #f6f7f8;
+    --color-light: #ffffff;
     --bg-color-dark: #212121;
     --main-color-hover: #ffcd33;
-    --main-color-hover-dark: theme("colors.yellow.500");
     --main-color: #ffdd2d;
     --main-color-dark: #FFDD2D;
-    --second-background-color: #f1eee8;
+    --second-background-color: #f6f7f8;
     --form-background-color: #E9E0D2;
 }
 

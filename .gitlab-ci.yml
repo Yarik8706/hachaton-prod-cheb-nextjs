@@ -51,7 +51,7 @@ dev-publish:
 dev-deploy:
   stage: deploy
   trigger:
-    project: team-24/infra-deploy
+    project: team-15/infra-deploy
     branch: master
     strategy: depend
 
