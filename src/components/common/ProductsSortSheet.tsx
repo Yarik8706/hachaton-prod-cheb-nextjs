@@ -22,7 +22,7 @@ interface IProps {
 }
 
 export function ProductsFilterSheet({ onSubmit } : IProps) {
-  const { setSearchParams, getSearchParams } = useArticleSearch();
+  const { setSearchParams } = useArticleSearch();
 
   const [sort, setSort] = useState<SearchParams>({
     sort_by_price: "",
