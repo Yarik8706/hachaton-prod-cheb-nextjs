@@ -56,13 +56,38 @@ dev-publish:
     - if: $CI_COMMIT_BRANCH == "master"
 
 # ---------- DEPLOY ----------
-dev-deploy:
+dev-deploy-frontend:
   stage: deploy
-  trigger:
-    project: team-15/infra-deploy
-    branch: master
-    strategy: depend
+
+  before_script:
+    - apk add --no-cache openssh
+    - mkdir -p ~/.ssh
+    - echo "$PRIVATE_KEY_BASE64" | base64 -d > ~/.ssh/id_rsa
+    - chmod 600 ~/.ssh/id_rsa
+    - ssh-keyscan $SSH_HOST >> ~/.ssh/known_hosts
+
+  script:
+    - |
+      ssh -o StrictHostKeyChecking=no $SSH_USER@$SSH_HOST "
+        echo '$DEV_DOCKER_PASSWORD' | docker login '$CI_REGISTRY' -u '$DEV_DOCKER_USERNAME' --password-stdin;
+
+        echo 'Pulling frontend image...'
+        docker pull $FRONTEND_IMAGE;
+
+        echo 'Stopping old container...'
+        docker stop frontend || true;
+        docker rm frontend || true;
+
+        echo 'Running new frontend container...'
+        docker run -d \
+            --name frontend \
+            -p 3000:3000 \
+            $FRONTEND_IMAGE;
+
+        echo 'Frontend redeployed successfully.'
+      "
 
   rules:
-    - if: $CI_COMMIT_BRANCH == "master"
+    - if: '$CI_COMMIT_BRANCH == "master"'
+
 
