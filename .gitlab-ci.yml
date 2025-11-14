@@ -55,39 +55,45 @@ dev-publish:
   rules:
     - if: $CI_COMMIT_BRANCH == "master"
 
-# ---------- DEPLOY ----------
 dev-deploy-frontend:
   stage: deploy
 
   before_script:
     - apk add --no-cache openssh
     - mkdir -p ~/.ssh
-    - echo "$PRIVATE_KEY_BASE64" | base64 -d > ~/.ssh/id_rsa
+
+    # используем твою переменную ENV_PRIVATE_KEY_BASE64
+    - echo "$ENV_PRIVATE_KEY_BASE64" | base64 -d > ~/.ssh/id_rsa
     - chmod 600 ~/.ssh/id_rsa
-    - ssh-keyscan $SSH_HOST >> ~/.ssh/known_hosts
+
+    # вывод пустых переменных для диагностики
+    - echo "SSH_HOST='$ENV_SSH_HOST'"
+    - echo "SSH_USER='$ENV_SSH_USER'"
+
+    - test -n "$ENV_SSH_HOST" || (echo "ERROR: ENV_SSH_HOST is empty" && exit 1)
+    - test -n "$ENV_SSH_USER" || (echo "ERROR: ENV_SSH_USER is empty" && exit 1)
+
+    # ключевая строка – правильное имя переменной
+    - ssh-keyscan -p 22 "$ENV_SSH_HOST" >> ~/.ssh/known_hosts
 
   script:
     - |
-      ssh -o StrictHostKeyChecking=no $SSH_USER@$SSH_HOST "
+      ssh -o StrictHostKeyChecking=no "$ENV_SSH_USER@$ENV_SSH_HOST" "
         echo '$DEV_DOCKER_PASSWORD' | docker login '$CI_REGISTRY' -u '$DEV_DOCKER_USERNAME' --password-stdin;
 
-        echo 'Pulling frontend image...'
         docker pull $FRONTEND_IMAGE;
 
-        echo 'Stopping old container...'
         docker stop frontend || true;
         docker rm frontend || true;
 
-        echo 'Running new frontend container...'
         docker run -d \
-            --name frontend \
-            -p 3000:3000 \
-            $FRONTEND_IMAGE;
-
-        echo 'Frontend redeployed successfully.'
+          --name frontend \
+          -p 3000:3000 \
+          $FRONTEND_IMAGE;
       "
 
   rules:
     - if: '$CI_COMMIT_BRANCH == "master"'
+
 
 
