@@ -69,10 +69,7 @@ dev-deploy-frontend:
     # вывод пустых переменных для диагностики
     - echo "SSH_HOST='$ENV_SSH_HOST'"
     - echo "SSH_USER='$ENV_SSH_USER'"
-
-    - test -n "$ENV_SSH_HOST" || (echo "ERROR: ENV_SSH_HOST is empty" && exit 1)
-    - test -n "$ENV_SSH_USER" || (echo "ERROR: ENV_SSH_USER is empty" && exit 1)
-
+    
     # ключевая строка – правильное имя переменной
     - ssh-keyscan -p 22 "$ENV_SSH_HOST" >> ~/.ssh/known_hosts
 
