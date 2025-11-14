@@ -9,37 +9,47 @@ enum SourceType {
 	Medium
 }
 
+enum DateSearchPeriod {
+	none,
+	day,
+	month,
+	year,
+}
+
 interface SearchParams {
+	text: string,
 	tags: string[],
-	onDateCreated: Date,
-	offDateCreated: Date,
+	dateSearchPeriod: DateSearchPeriod,
 	sourceType: SourceType
 }
 
 interface SearchStore {
-	getSearchParams: () => SearchParams,
+	searchParams: SearchParams,
 	setSearchParams: (params: SearchParams) => void,
-	getSearchResults: () => Promise<ISearchResult>
+	getSearchResults: () => Promise<ISearchResult>,
 }
 
 export const useArticleSearch = create<SearchStore>()(
 	devtools((set, get) => ({
-		getSearchParams: () => {
-			return {
-				tags: [],
-				onDateCreated: new Date(),
-				offDateCreated: new Date(),
-				sourceType: SourceType.Habr
-			}
-		},
+		searchParams: null,
 		setSearchParams: (params: SearchParams) => {
-			
+			set({searchParams: params})
+
+			const url = new URL(window.location.href);
+			const p = url.searchParams;
+
+			p.set("tags", params.tags.join(","));
+			p.set("dateSearchPeriod", params.dateSearchPeriod.toString());
+			p.set("sourceType", params.sourceType.toString());
+
+			url.search = p.toString();
+
+			window.history.replaceState({}, "", url.toString());
 		},
 		getSearchResults: () => {
-			const { getSearchParams } = get()
-			const searchParams = getSearchParams()
+			const { searchParams } = get()
 			
-			return api.get<ISearchResult>(`/api/v1/search?tags=${searchParams.tags.join(',')}&onDateCreated=${searchParams.onDateCreated.toISOString()}&offDateCreated=${searchParams.offDateCreated.toISOString()}&sourceType=${searchParams.sourceType}`)
+			return api.get<ISearchResult>(`/api/v1/search?text=${searchParams.text}&tags=${searchParams.tags.join(',')}&onDateCreated=${searchParams.dateSearchPeriod.toString()}&sourceType=${searchParams.sourceType}`)
 		}
 	}))
 );

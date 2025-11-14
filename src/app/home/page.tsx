@@ -3,8 +3,15 @@
 import { Search } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { useGSAP } from '@gsap/react'
 
 export default function HomePage() {
+  
+  
+  
+  useGSAP(() => {
+    
+  })
 
   const startSearch = () => {
 

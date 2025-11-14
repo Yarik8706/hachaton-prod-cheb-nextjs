@@ -62,31 +62,55 @@ dev-deploy-frontend:
     - apk add --no-cache openssh
     - mkdir -p ~/.ssh
 
-    # используем твою переменную ENV_PRIVATE_KEY_BASE64
+    # SSH key
     - echo "$ENV_PRIVATE_KEY_BASE64" | base64 -d > ~/.ssh/id_rsa
     - chmod 600 ~/.ssh/id_rsa
 
-    # вывод пустых переменных для диагностики
-    - echo "SSH_HOST='$ENV_SSH_HOST'"
-    - echo "SSH_USER='$ENV_SSH_USER'"
-    
-    # ключевая строка – правильное имя переменной
+    # Проверка значений переменных
+    - echo "Using SSH HOST: $ENV_SSH_HOST"
+    - echo "Using SSH USER: $ENV_SSH_USER"
+    - echo "Using registry: $CI_REGISTRY"
+    - echo "Using image: $CI_REGISTRY_IMAGE:latest"
+
+    - test -n "$ENV_SSH_HOST" || (echo "ERROR: ENV_SSH_HOST is empty" && exit 1)
+    - test -n "$ENV_SSH_USER" || (echo "ERROR: ENV_SSH_USER is empty" && exit 1)
+
+    # Добавление сервера в known_hosts
     - ssh-keyscan -p 22 "$ENV_SSH_HOST" >> ~/.ssh/known_hosts
 
   script:
     - |
       ssh -o StrictHostKeyChecking=no "$ENV_SSH_USER@$ENV_SSH_HOST" "
-        echo '$DEV_DOCKER_PASSWORD' | docker login '$CI_REGISTRY' -u '$DEV_DOCKER_USERNAME' --password-stdin;
+        echo 'Logging into registry...';
+        echo '$CI_REGISTRY_PASSWORD' | docker login '$CI_REGISTRY' -u '$CI_REGISTRY_USER' --password-stdin;
 
-        docker pull $FRONTEND_IMAGE;
+        echo 'Pulling frontend image...';
+        docker pull $CI_REGISTRY_IMAGE:latest;
 
+        echo 'Stopping old frontend container...';
         docker stop frontend || true;
         docker rm frontend || true;
 
+        echo 'Starting new frontend container...';
         docker run -d \
           --name frontend \
+          --restart unless-stopped \
           -p 3000:3000 \
-          $FRONTEND_IMAGE;
+          $CI_REGISTRY_IMAGE:latest;
+      "
+
+    - |
+      # Проверка запуска
+      ssh -o StrictHostKeyChecking=no "$ENV_SSH_USER@$ENV_SSH_HOST" "
+        sleep 5
+        if docker ps | grep -q 'frontend'; then
+          echo 'Frontend started successfully';
+          docker logs frontend --tail 50
+        else
+          echo 'Frontend failed to start';
+          docker logs frontend --tail 50 || true
+          exit 1
+        fi
       "
 
   rules:

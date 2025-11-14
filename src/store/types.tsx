@@ -2,7 +2,7 @@
 export interface IProfile {
   id: string;
   username: string;
-  address: string;
+  interests: string[];
 }
 
 export interface ISearchResult {
