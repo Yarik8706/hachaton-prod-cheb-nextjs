@@ -66,15 +66,6 @@ dev-deploy-frontend:
     - echo "$ENV_PRIVATE_KEY_BASE64" | base64 -d > ~/.ssh/id_rsa
     - chmod 600 ~/.ssh/id_rsa
 
-    # Проверка значений переменных
-    - echo "Using SSH HOST: $ENV_SSH_HOST"
-    - echo "Using SSH USER: $ENV_SSH_USER"
-    - echo "Using registry: $CI_REGISTRY"
-    - echo "Using image: $CI_REGISTRY_IMAGE:latest"
-
-    - test -n "$ENV_SSH_HOST" || (echo "ERROR: ENV_SSH_HOST is empty" && exit 1)
-    - test -n "$ENV_SSH_USER" || (echo "ERROR: ENV_SSH_USER is empty" && exit 1)
-
     # Добавление сервера в known_hosts
     - ssh-keyscan -p 22 "$ENV_SSH_HOST" >> ~/.ssh/known_hosts
 
