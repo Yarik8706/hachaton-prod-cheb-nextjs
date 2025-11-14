@@ -5,22 +5,28 @@ stages:
 
 variables:
   IMAGE: "$CI_REGISTRY_IMAGE:latest"
-  DOCKER_HOST: tcp://docker:2375
-  DOCKER_DRIVER: overlay2
+  DOCKER_CONFIG: /kaniko/.docker/
+  KANIKO_IMAGE: gcr.io/kaniko-project/executor:debug
 
 # ---------- BUILD ----------
 dev-build:
   stage: build
   image:
-    name: gcr.io/kaniko-project/executor:debug
+    name: $KANIKO_IMAGE
     entrypoint: [""]
-  variables:
-    DOCKER_CONFIG: /kaniko/.docker/
   script:
-    - mkdir -p /kaniko/.docker
-    - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$DEV_DOCKER_USERNAME\",\"password\":\"$DEV_DOCKER_PASSWORD\"}}}" > /kaniko/.docker/config.json
-    - /kaniko/executor --context $CI_PROJECT_DIR --destination $IMAGE --verbosity info
+    - mkdir -p $DOCKER_CONFIG
+    - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$DEV_DOCKER_USERNAME\",\"password\":\"$DEV_DOCKER_PASSWORD\"}}}" \
+      > $DOCKER_CONFIG/config.json
 
+    - |
+      /kaniko/executor \
+        --context $CI_PROJECT_DIR \
+        --dockerfile $CI_PROJECT_DIR/Dockerfile \
+        --destination "$CI_REGISTRY_IMAGE:latest" \
+        --cache=true \
+        --cache-repo="$CI_REGISTRY_IMAGE/cache" \
+        --verbosity=info
 
   rules:
     - if: $CI_COMMIT_BRANCH == "master"
@@ -29,25 +35,27 @@ dev-build:
 dev-publish:
   stage: publish
   image:
-    name: gcr.io/kaniko-project/executor:debug
+    name: $KANIKO_IMAGE
     entrypoint: [""]
-  variables:
-    DOCKER_CONFIG: /kaniko/.docker/
   script:
-    - mkdir -p /kaniko/.docker
-    - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$DEV_DOCKER_USERNAME\",\"password\":\"$DEV_DOCKER_PASSWORD\"}}}" > /kaniko/.docker/config.json
+    - mkdir -p $DOCKER_CONFIG
+    - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$DEV_DOCKER_USERNAME\",\"password\":\"$DEV_DOCKER_PASSWORD\"}}}" \
+      > $DOCKER_CONFIG/config.json
+
     - |
       /kaniko/executor \
         --context $CI_PROJECT_DIR \
         --dockerfile $CI_PROJECT_DIR/Dockerfile \
         --destination "$CI_REGISTRY_IMAGE:latest" \
-        --destination "$IMAGE" \
-        --verbosity info
+        --destination "$CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA" \
+        --cache=true \
+        --cache-repo="$CI_REGISTRY_IMAGE/cache" \
+        --verbosity=info
 
   rules:
     - if: $CI_COMMIT_BRANCH == "master"
 
-# ---------- DEPLOY (через SSH) ----------
+# ---------- DEPLOY ----------
 dev-deploy:
   stage: deploy
   trigger:
