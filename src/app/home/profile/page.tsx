@@ -5,11 +5,15 @@ import { useProfile } from '@/store/profile.store'
 import { useInterestsModal } from '@/components/dialogs/GlobalInterestsDialog'
 import CommonSpinner from '@/components/common/CommonSpinner'
 import { useEffect } from 'react'
+import { Button } from '@/components/ui/button'
+import { useRouter } from 'next/navigation'
+import { useAuth } from '@/providers/AuthProvider'
 
 export default function ProfilePage() {
-
+  const router = useRouter()
   const setOpen = useInterestsModal((s) => s.setOpen);
-  const {profile, isLoading, fetchProfile } = useProfile()
+  const {clearToken} = useAuth()
+  const {profile, error, isLoading, fetchProfile} = useProfile()
 
   useEffect(() => {
     if (profile == null){
@@ -20,6 +24,7 @@ export default function ProfilePage() {
   return (
     <div className="w-full flex flex-col md:px-6 py-10">
       {isLoading && <CommonSpinner variant={"outline"} title={"Загрузка профиля..."} />}
+      {error && <div className="text-red-500">{error}</div>}
       {!isLoading && profile &&
         <>
           <div className="w-full bg-white rounded-3xl p-6 flex flex-col gap-6 shadow-sm">
@@ -48,13 +53,16 @@ export default function ProfilePage() {
               </button>
             </div>
           </div>
-          <div className="mt-10">
-            <button className="px-5 py-3 bg-white rounded-2xl text-blue-500 font-medium shadow-sm">
-              Выйти
-            </button>
-          </div>
         </>
       }
+      <div className="mt-10">
+        <Button
+          variant="outline"
+          onClick={() => {clearToken(); router.push("/")}}
+          className="px-5 py-3 bg-white rounded-2xl text-blue-500 font-medium shadow-sm">
+          Выйти
+        </Button>
+      </div>
     </div>
   );
 

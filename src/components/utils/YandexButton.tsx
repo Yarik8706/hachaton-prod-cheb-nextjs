@@ -1,43 +1,21 @@
 ﻿"use client"
 
 import { Button } from '@/components/ui/button'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { useEffect, useRef } from 'react'
-import { HOME_URL } from '@/consts/consts'
 import { api } from '@/api/api'
 
 export default function YandexButton() {
-	const { replace, push } = useRouter()
+	const { replace } = useRouter()
 	const yandexRef = useRef("")
-
-	const params = useSearchParams()
-
 	useEffect(() => {
-
 		api.get(`v1/auth/yandex/auth-url`).then(res => {
 			yandexRef.current = res.data
-			console.log(res)
 		}).catch(err => console.error('Ошибка получения URL:', err))
-
 	}, [])
-
-	useEffect(() => {
-		const code = params.get('code')
-
-		// if (code) {
-		// 	api
-		// 		.post(`v1/auth/yandex/authorize?code=${encodeURIComponent(code)}`)
-		// 		.then(res => {
-		// 			localStorage.setItem('access_token', res.data.access_token)
-		// 			push(HOME_URL)
-		// 		})
-		// 		.catch(err => console.error('Ошибка авторизации:', err))
-		// }
-	}, [params, push])
 
 	const handleLogin = () => {
 		const authUrl = yandexRef.current
-		console.log("dfsfdsafsafd " + authUrl)
 		replace(authUrl)
 	}
 

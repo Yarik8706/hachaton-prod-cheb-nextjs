@@ -76,8 +76,6 @@ export const useProfile = create<ProfileStore>()(
       } finally {
         set({ isLoading: false });
       }
-    },
-
-    logout: () => null
+    }
   }))
 );

@@ -59,7 +59,7 @@ export default function AuthForm() {
 
 		await login(data)
 			.then(response => {
-				const accessToken = response.headers["authorization"]?.split(" ")[1];
+				const accessToken = response.data.access;
 				if (accessToken) {
 					setToken(accessToken);
 					tokenUpdate();
