@@ -2,11 +2,12 @@
 
 import { useParams } from "next/navigation";
 import { useArticleSearch } from "@/store/search.store";
+import { useAi } from "@/store/ai.store";
+
 import { useEffect, useState } from "react";
 import { IArticle } from "@/store/types";
-import { Skeleton } from "@/components/ui/skeleton";
 import Link from "next/link";
-import { useAi } from "@/store/ai.store";
+import { Skeleton } from "@/components/ui/skeleton";
 
 import {
 	Accordion,
@@ -14,7 +15,8 @@ import {
 	AccordionItem,
 	AccordionTrigger,
 } from "@/components/ui/accordion";
-import DOMPurify from "isomorphic-dompurify";
+
+import { renderMarkdown } from "@/utils/markdown"; // <-- Markdown → HTML
 
 export default function ArticlePage() {
 	const { id } = useParams();
@@ -29,28 +31,34 @@ export default function ArticlePage() {
 	const [article, setArticle] = useState<IArticle | null>(null);
 	const [notFound, setNotFound] = useState(false);
 
-	// Управление аккордионом вручную
+	const [markdownHtml, setMarkdownHtml] = useState("");
 	const [accordionValue, setAccordionValue] = useState<string>("");
 
+	// Загрузка статьи
 	useEffect(() => {
-		getArticleById(id as string).then((a) => {
+		getArticleById(id as string).then(async (a) => {
 			if (!a) {
 				setNotFound(true);
-			} else {
-				setArticle(a);
-				getArticleSummary(a.text); // ← Запускаем генерацию summary
+				return;
 			}
+
+			setArticle(a);
+			getArticleSummary(a.text);
+
+			// Markdown обработка
+			const rendered = await renderMarkdown(a.text);
+			setMarkdownHtml(rendered);
 		});
 	}, []);
 
-	// Авто-открытие аккордиона после загрузки summary
+	// Авто-открытие summary
 	useEffect(() => {
 		if (!isSummaryLoading && summary) {
 			setAccordionValue("summary");
 		}
 	}, [isSummaryLoading, summary]);
 
-	// ===== Скелетон статьи =====
+	// ====== Скелетон ======
 	if (isLoading && !article && !notFound) {
 		return (
 			<div className="w-full max-w-3xl mx-auto pt-10 px-4 space-y-6">
@@ -61,12 +69,11 @@ export default function ArticlePage() {
 				<Skeleton className="h-4 w-full" />
 				<Skeleton className="h-4 w-[90%]" />
 				<Skeleton className="h-4 w-[95%]" />
-				<Skeleton className="h-4 w-full" />
 			</div>
 		);
 	}
 
-	// ===== Статья не найдена =====
+	// ====== Not found ======
 	if (notFound) {
 		return (
 			<div className="w-full max-w-3xl mx-auto pt-10 px-4">
@@ -87,15 +94,9 @@ export default function ArticlePage() {
 
 	if (!article) return null;
 
-	// 🔒 Подготовка безопасного HTML (работает и при SSR, и на клиенте)
-	const sanitizedHtml = DOMPurify.sanitize(article.text, {
-		// при необходимости можно жёстко ограничить теги/атрибуты
-		// ALLOWED_TAGS: ["p", "h1", "h2", "h3", "strong", "em", "ul", "ol", "li", "a", "code", "pre"],
-		// ALLOWED_ATTR: ["href", "title", "target", "rel"],
-	});
-
 	return (
 		<div className="w-full max-w-3xl mx-auto pt-10 px-4">
+
 			{/* ===== Навигация ===== */}
 			<div className="text-sm text-gray-500 mb-6">
 				<Link href="/home" className="hover:underline text-blue-600">
@@ -114,15 +115,26 @@ export default function ArticlePage() {
 			<div className="text-gray-500 text-sm mb-8">
 				{new Date(article.creation_date).toLocaleDateString("ru-RU")}
 				{" • "}
-				<span className="text-blue-600 break-all">{article.source}</span>
+				<a className="text-blue-600 break-all cursor-pointer" href={article.source}>{article.source}</a>
+			</div>
+			
+			{/* ===== Теги ===== */}
+			<div className="flex flex-wrap gap-2 mt-8">
+				{article.tags.map((tag) => (
+					<span
+						key={tag}
+						className="px-3 py-1 bg-gray-300 text-gray-700 text-sm rounded-full"
+					>
+            {tag}
+          </span>
+				))}
 			</div>
 
-			{/* ===== Пересказ от ИИ (Аккордион) ===== */}
+			{/* ====== Summary ====== */}
 			<Accordion
 				type="single"
 				collapsible
 				value={accordionValue}
-				defaultValue={""}
 				onValueChange={setAccordionValue}
 				className="mb-8"
 			>
@@ -136,18 +148,13 @@ export default function ArticlePage() {
             px-4
           "
 				>
-					<AccordionTrigger
-						className="
-              text-[17px] 
-              font-semibold
-              py-4
-            "
-					>
+					<AccordionTrigger className="text-[17px] font-semibold py-4">
 						Краткий пересказ от ИИ
 					</AccordionTrigger>
 
 					<AccordionContent className="pb-4 pt-1">
-						{/* Скелетон summary */}
+
+						{/* Скелетон */}
 						{isSummaryLoading && (
 							<div className="space-y-3 mt-2">
 								<Skeleton className="h-4 w-[80%]" />
@@ -157,41 +164,22 @@ export default function ArticlePage() {
 							</div>
 						)}
 
-						{/* Готовый summary */}
+						{/* Summary */}
 						{!isSummaryLoading && summary && (
-							<div
-								className="
-                  text-gray-800 
-                  text-[15px] 
-                  leading-relaxed 
-                  mt-2 
-                  whitespace-pre-line
-                "
-							>
+							<div className="text-gray-800 text-[15px] leading-relaxed mt-2 whitespace-pre-line">
 								{summary}
 							</div>
 						)}
+
 					</AccordionContent>
 				</AccordionItem>
 			</Accordion>
 
-			{/* ===== Основной текст (HTML) ===== */}
+			{/* ===== Основной текст (Markdown) ===== */}
 			<div
 				className="prose prose-gray max-w-none text-[16px] leading-relaxed"
-				dangerouslySetInnerHTML={{ __html: sanitizedHtml }}
+				dangerouslySetInnerHTML={{ __html: markdownHtml }}
 			/>
-
-			{/* ===== Теги ===== */}
-			<div className="flex flex-wrap gap-2 mt-8">
-				{article.tags.map((tag) => (
-					<span
-						key={tag}
-						className="px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-full"
-					>
-            {tag}
-          </span>
-				))}
-			</div>
 		</div>
 	);
 }
