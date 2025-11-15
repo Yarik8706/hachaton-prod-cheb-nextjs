@@ -28,16 +28,26 @@ export default function ArticlePage() {
 	const [article, setArticle] = useState<IArticle | null>(null);
 	const [notFound, setNotFound] = useState(false);
 
+	// Управление аккордионом вручную
+	const [accordionValue, setAccordionValue] = useState<string>("");
+
 	useEffect(() => {
 		getArticleById(id as string).then((a) => {
 			if (!a) {
 				setNotFound(true);
 			} else {
 				setArticle(a);
-				getArticleSummary(a.text); // ← сразу загружаем пересказ
+				getArticleSummary(a.text); // ← Запускаем генерацию summary
 			}
 		});
 	}, []);
+
+	// Авто-открытие аккордиона после загрузки summary
+	useEffect(() => {
+		if (!isSummaryLoading && summary) {
+			setAccordionValue("summary");
+		}
+	}, [isSummaryLoading, summary]);
 
 	// ===== Скелетон статьи =====
 	if (isLoading && !article && !notFound) {
@@ -100,15 +110,39 @@ export default function ArticlePage() {
 				<span className="text-blue-600 break-all">{article.source}</span>
 			</div>
 
-			{/* ===== Пересказ от ИИ ===== */}
-			<Accordion type="single" collapsible className="mb-8 bg-[#27BFFF] rounded-xl p-3">
-				<AccordionItem value="summary">
-					<AccordionTrigger className="text-[17px] font-semibold">
+			{/* ===== Пересказ от ИИ (Аккордион) ===== */}
+			<Accordion
+				type="single"
+				collapsible
+				value={accordionValue}
+				onValueChange={setAccordionValue}
+				className="mb-8"
+			>
+				<AccordionItem
+					value="summary"
+					className="
+            rounded-xl 
+            border border-blue-200 
+            bg-blue-50/70 
+            shadow-sm 
+            px-4
+          "
+				>
+					<AccordionTrigger
+						className="
+              text-[17px] 
+              font-semibold
+              py-4
+            "
+					>
 						Краткий пересказ от ИИ
 					</AccordionTrigger>
-					<AccordionContent>
+
+					<AccordionContent className="pb-4 pt-1">
+
+						{/* Скелетон summary */}
 						{isSummaryLoading && (
-							<div className="space-y-3 mt-3">
+							<div className="space-y-3 mt-2">
 								<Skeleton className="h-4 w-[80%]" />
 								<Skeleton className="h-4 w-[95%]" />
 								<Skeleton className="h-4 w-full" />
@@ -116,8 +150,17 @@ export default function ArticlePage() {
 							</div>
 						)}
 
+						{/* Готовый summary */}
 						{!isSummaryLoading && summary && (
-							<div className="text-gray-800 text-[15px] leading-relaxed mt-3 whitespace-pre-line">
+							<div
+								className="
+                  text-gray-800 
+                  text-[15px] 
+                  leading-relaxed 
+                  mt-2 
+                  whitespace-pre-line
+                "
+							>
 								{summary}
 							</div>
 						)}
