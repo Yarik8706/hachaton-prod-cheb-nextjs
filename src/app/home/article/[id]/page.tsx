@@ -14,6 +14,7 @@ import {
 	AccordionItem,
 	AccordionTrigger,
 } from "@/components/ui/accordion";
+import DOMPurify from "isomorphic-dompurify";
 
 export default function ArticlePage() {
 	const { id } = useParams();
@@ -86,9 +87,15 @@ export default function ArticlePage() {
 
 	if (!article) return null;
 
+	// 🔒 Подготовка безопасного HTML (работает и при SSR, и на клиенте)
+	const sanitizedHtml = DOMPurify.sanitize(article.text, {
+		// при необходимости можно жёстко ограничить теги/атрибуты
+		// ALLOWED_TAGS: ["p", "h1", "h2", "h3", "strong", "em", "ul", "ol", "li", "a", "code", "pre"],
+		// ALLOWED_ATTR: ["href", "title", "target", "rel"],
+	});
+
 	return (
 		<div className="w-full max-w-3xl mx-auto pt-10 px-4">
-
 			{/* ===== Навигация ===== */}
 			<div className="text-sm text-gray-500 mb-6">
 				<Link href="/home" className="hover:underline text-blue-600">
@@ -140,7 +147,6 @@ export default function ArticlePage() {
 					</AccordionTrigger>
 
 					<AccordionContent className="pb-4 pt-1">
-
 						{/* Скелетон summary */}
 						{isSummaryLoading && (
 							<div className="space-y-3 mt-2">
@@ -169,14 +175,11 @@ export default function ArticlePage() {
 				</AccordionItem>
 			</Accordion>
 
-			{/* ===== Основной текст ===== */}
-			<div className="prose prose-gray max-w-none text-[16px] leading-relaxed">
-				{article.text.split("\n").map((p, idx) => (
-					<p key={idx} className="mb-4">
-						{p}
-					</p>
-				))}
-			</div>
+			{/* ===== Основной текст (HTML) ===== */}
+			<div
+				className="prose prose-gray max-w-none text-[16px] leading-relaxed"
+				dangerouslySetInnerHTML={{ __html: sanitizedHtml }}
+			/>
 
 			{/* ===== Теги ===== */}
 			<div className="flex flex-wrap gap-2 mt-8">
