@@ -1,14 +1,5 @@
 ﻿import { Star } from 'lucide-react'
 
-const INTEREST_COLORS = [
-	"#FFD200", // tinkoff-yellow
-	"#27BFFF", // airlines
-	"#4972CF", // premium
-	"#00B640", // business
-	"#FFDD2D", // tinkoff-brand
-	"#9A06FF", // ai-assistant
-];
-
 export default function UserInterests({ interests }: { interests: string[] }) {
 	return (
 		<div className="flex flex-col gap-4">
@@ -24,13 +15,12 @@ export default function UserInterests({ interests }: { interests: string[] }) {
 				</div>
 			</div>
 			{interests.map((item, idx) => {
-				const color = INTEREST_COLORS[idx % INTEREST_COLORS.length];
-
+				
 				return (
 					<div
 						key={idx}
 						className="flex items-center justify-between px-4 py-3 rounded-2xl"
-						style={{ backgroundColor: color + "22" }} // мягкий фон (прозрачность)
+						style={{ backgroundColor: "#FFD20022" }} // мягкий фон (прозрачность)
 					>
 						<div className="flex items-center gap-4">
 

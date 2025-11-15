@@ -1,10 +1,8 @@
 ﻿import { create } from "zustand";
 import { devtools } from "zustand/middleware";
 import { api } from "@/api/api";
-import { IArticle, ISearchResult } from '@/store/types'
+import { IArticle, IArticleCard, ISearchResult } from '@/store/types'
 import { siteConfig } from "@/config/site.config";
-
-//siteConfig.showMockData
 
 export enum SourceType {
 	Habr,
@@ -35,10 +33,17 @@ interface SearchStore {
 	searchingHistory: string[];
 	searchResults: ISearchResult | null;
 
+	offset: number;      // ← добавлено
+	limit: number;       // ← добавлено
+	lastId: string | null;  // ← добавлено
+
 	setSearchParams: (params: SearchParams) => void;
-	getArticleById: (id: string) => Promise<IArticle | null>;
+
 	getSearchResults: () => Promise<null>;
+	loadMore: () => Promise<void>;     // ← добавлено
+
 	getSearchingHistory: () => Promise<null>;
+	getArticleById: (id: string) => Promise<IArticle | null>;
 }
 
 export const useArticleSearch = create<SearchStore>()(
@@ -48,9 +53,14 @@ export const useArticleSearch = create<SearchStore>()(
 
 		searchParams: null,
 		searchingHistory: [],
+		searchResults: null,
+
+		offset: 0,
+		limit: 10,
+		lastId: null,
 
 		setSearchParams: (params: SearchParams) => {
-			const cleaned: Record<string, any> = { ...params };
+			const cleaned: Record<string, any> = convertURLParamsToRecord(params);
 
 			if (params.dateSearchPeriod === DateSearchPeriod.none) {
 				delete cleaned.dateSearchPeriod;
@@ -63,13 +73,11 @@ export const useArticleSearch = create<SearchStore>()(
 			if (!params.tags || params.tags.length === 0) {
 				delete cleaned.tags;
 			}
-			
+
 			if (!params.text || params.text.trim() === "") {
 				delete cleaned.text;
 			}
-			
-			set({ searchParams: cleaned as SearchParams });
-			
+
 			const search = new URLSearchParams(window.location.search);
 
 			Object.keys(params).forEach((key) => {
@@ -84,53 +92,19 @@ export const useArticleSearch = create<SearchStore>()(
 			window.history.replaceState(null, "", newUrl);
 		},
 
-
+		// === ПЕРВАЯ ЗАГРУЗКА ===
 		getSearchResults: async () => {
-			const { searchParams } = get();
-			if (!searchParams) {
-				if (siteConfig.showMockData) {
-					await new Promise(res => setTimeout(res, 500));
-
-					const mock: ISearchResult = {
-						articles: [
-							{
-								id: "mock-1",
-								title: "For you article",
-								tags: ["frontend", "react"],
-								onDateCreated: new Date(),
-								source: "https://habr.com/fgdsgfdg",
-								summary: "Lorem ipsum dolor sit amet consectetur adipisicing elit. Lorem ipsum dolor sit amet consectetur adipisicing elit. Lorem ipsum dolor sit amet consectetur adipisicing elit."
-							},
-							{
-								id: "mock-2",
-								title: "Mock Article 2",
-								tags: ["backend", "nestjs"],
-								onDateCreated: new Date(),
-								source: "https://habr.com/fgdsgfdg",
-								summary: "Lorem ipsum dolor sit amet consectetur adipisicing elit. Lorem ipsum dolor sit amet consectetur adipisicing elit. Lorem ipsum dolor sit amet consectetur adipisicing elit."
-							}
-						],
-						summarize: "Моковые данные. Результаты поиска."
-					};
-
-					set({ searchResults: mock });
-					console.log(mock)
-					return
-				}
-
-				const { data } = await api.get<ISearchResult>(
-					`/api/v1/articles/me`
-				)
-				
-				set({ searchResults: data })
-				
-				return 
-			}
+			const { searchParams, limit } = get();
 
 			try {
-				set({ isLoading: true, error: null });
-				console.log("fdsfsfdfsds")
-				// ---- MOCK ----
+				set({
+					isLoading: true,
+					error: null,
+					offset: 0,
+					lastId: null
+				});
+
+				// MOCK режим
 				if (siteConfig.showMockData) {
 					await new Promise(res => setTimeout(res, 500));
 
@@ -141,53 +115,124 @@ export const useArticleSearch = create<SearchStore>()(
 								title: "Mock Article 1",
 								tags: ["frontend", "react"],
 								onDateCreated: new Date(),
-								source: "https://habr.com/fgdsgfdg",
-								summary: "Lorem ipsum dolor sit amet consectetur adipisicing elit. Lorem ipsum dolor sit amet consectetur adipisicing elit. Lorem ipsum dolor sit amet consectetur adipisicing elit."
+								source: "https://habr.com/",
+								summary: "Lorem ipsum..."
 							},
-							{
-								id: "mock-2",
-								title: "Mock Article 2",
-								tags: ["backend", "nestjs"],
-								onDateCreated: new Date(),
-								source: "https://habr.com/fgdsgfdg",
-								summary: "Lorem ipsum dolor sit amet consectetur adipisicing elit. Lorem ipsum dolor sit amet consectetur adipisicing elit. Lorem ipsum dolor sit amet consectetur adipisicing elit."
-							}
 						],
-						summarize: "Моковые данные. Результаты поиска."
+						summarize: "Моковые данные"
 					};
 
-					set({ searchResults: mock });
-					console.log(mock)
-					return
+					set({
+						searchResults: mock,
+						offset: mock.articles.length,
+						lastId: mock.articles.at(-1)?.id || null,
+					});
+
+					return;
 				}
 
-				let tags = ""
-				searchParams.tags.forEach(tag => {
-					tags += `&tags=${tag}`
-				})
+				const { data } = await api.get<ISearchResult>(
+					`/api/v1/search`, {
+						params: {
+							...searchParams,
+							offset: 0,
+							limit
+						}
+					});
+
+				set({
+					searchResults: data,
+					offset: data.articles.length,
+					lastId: data.articles.at(-1)?.id || null
+				});
+			} catch {
+				set({ error: "Ошибка при получении результатов поиска" });
+			} finally {
+				set({ isLoading: false });
+			}
+
+			return null;
+		},
+
+		// === ДОГРУЗКА СТАТЕЙ ===
+		loadMore: async () => {
+			const {
+				searchParams,
+				searchResults,
+				offset,
+				limit,
+				lastId,
+				isLoading
+			} = get();
+
+			if (isLoading) return;
+			if (!searchResults) return;
+
+			try {
+				set({ isLoading: true });
+
+				// MOCK режим
+				if (siteConfig.showMockData) {
+					await new Promise(res => setTimeout(res, 500));
+
+					const extra: IArticleCard[] = [
+						{
+							id: "mock-extra",
+							title: "Next mock",
+							tags: ["nextjs"],
+							onDateCreated: new Date(),
+							source: "https://dev.to/",
+							summary: "extra..."
+						}
+					];
+
+					set({
+						searchResults: {
+							...searchResults,
+							articles: [...searchResults.articles, ...extra]
+						},
+						offset: offset + extra.length,
+						lastId: extra.at(-1)?.id || lastId,
+					});
+
+					return;
+				}
 
 				const { data } = await api.get<ISearchResult>(
-					`/api/v1/search?text=${searchParams.text}` +
-					tags +
-					`&tags=${searchParams.tags.join(",")}` +
-					`&onDateCreated=${searchParams.dateSearchPeriod}` +
-					`&sourceType=${searchParams.sourceType}`
+					`/api/v1/search`,
+					{
+						params: {
+							...searchParams,
+							offset,
+							limit,
+							lastId
+						}
+					}
 				);
 
-				set({ searchResults: data });
-			} catch (e) {
-				set({ error: "Ошибка при получении результатов поиска" });
-				return null;
+				const merged = [
+					...searchResults.articles,
+					...data.articles
+				];
+
+				set({
+					searchResults: {
+						...searchResults,
+						articles: merged
+					},
+					offset: merged.length,
+					lastId: merged.at(-1)?.id || null,
+				});
+
+			} catch {
+				set({ error: "Ошибка при пагинации" });
 			} finally {
 				set({ isLoading: false });
 			}
 		},
 
-
 		getSearchingHistory: async () => {
 			try {
-				set({ isLoading: true, error: null });
-
 				if (siteConfig.showMockData) {
 					await new Promise(res => setTimeout(res, 500));
 
@@ -198,42 +243,49 @@ export const useArticleSearch = create<SearchStore>()(
 
 				const { data } = await api.get<string[]>(`/api/v1/search/history`);
 				set({ searchingHistory: data });
-			} catch (e) {
+				return null;
+			} catch {
 				set({ error: "Ошибка при загрузке истории поиска" });
-			} finally {
-				set({ isLoading: false });
+				return null;
 			}
 		},
+
 		getArticleById: async (id: string) => {
 			try {
-				set({ isLoading: true, error: null });
-
-				// ---- MOCK ----
+				set({ isLoading: true });
 				if (siteConfig.showMockData) {
 					await new Promise(res => setTimeout(res, 500));
-
-					const mock: IArticle = {
+					
+					return {
 						id: "mock-1",
 						title: "Mock Article 1",
 						tags: ["frontend", "react"],
 						onDateCreated: new Date(),
-						source: "https://habr.com/fgdsgfdg",
-						text: "Mock Article 1"
-					};
-
-					return mock;
+						source: "https://habr.com/",
+						text: "Т-Инвестиции упростили доступ к российскому фондовому рынку для клиентов-иностранных граждан. Теперь нерезиденты-владельцы карты Black смогут открыть брокерский счет удаленно — без повторной встречи с представителем банка — и сразу начать инвестировать с суммой от 10 рублей. "
+					} as IArticle
 				}
-				// ---------------
-
+				
+				
 				const { data } = await api.get<IArticle>(`/api/v1/articles/${id}`);
 				return data;
-			} catch (e) {
+			} catch {
 				set({ error: "Ошибка при получении статьи" });
 				return null;
-			} finally {
+			}
+			finally {
 				set({ isLoading: false });
 			}
-		},
-
+		}
 	}))
 );
+
+
+export function convertURLParamsToRecord(params : SearchParams) {
+	return {
+		text: params.text,
+		tags: params.tags,
+		dateSearchPeriod: params.dateSearchPeriod,
+		sourceType: params.sourceType
+	}
+}

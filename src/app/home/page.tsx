@@ -3,38 +3,49 @@
 import { Filter, Search } from 'lucide-react'
 import { useEffect, useState, useRef } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { SearchParams, useArticleSearch } from '@/store/search.store'
+import { convertURLParamsToRecord, SearchParams, useArticleSearch } from '@/store/search.store'
 import { formatDate } from '@/components/utils/format-date'
 import { ArticleFilterSheet } from '@/components/sheets/ArticleFilterSheet'
 import { Skeleton } from '@/components/ui/skeleton';
+import CommonSpinner from '@/components/common/CommonSpinner'
 
 export default function HomePage() {
 
   const [searching, setSearching] = useState(false)
-  const [searchText, setSearchText] = useState("")   // 🔥
+  const [searchText, setSearchText] = useState("")
   const params = useSearchParams()
   const [showHistory, setShowHistory] = useState(false)
-
+  const [loadNextArticles, setLoadNextArticles] = useState(false)
+  const [isParamsEmpty, setIsParamsEmpty] = useState(false)
+  
   const {
     searchResults,
     setSearchParams,
     isLoading,
     searchingHistory,
     getSearchingHistory,
-    getSearchResults
+    getSearchResults,
+    searchParams,
+    loadMore                // ← ДОБАВЛЕНО
   } = useArticleSearch()
 
-  const searchRef = useRef<HTMLDivElement|null>(null)
+  const searchRef = useRef<HTMLDivElement | null>(null)
 
+  // первая загрузка
   useEffect(() => {
     getSearchingHistory()
     getSearchResults()
   }, [])
 
+  // при изменении query
   useEffect(() => {
     getSearchResults()
+    setLoadNextArticles(false)
+    setSearchText(params.get("text") || "")
+    
   }, [params])
 
+  // клик вне поиска
   useEffect(() => {
     function handleClick(e: MouseEvent) {
       if (!searchRef.current) return
@@ -45,6 +56,22 @@ export default function HomePage() {
     document.addEventListener('mousedown', handleClick)
     return () => document.removeEventListener('mousedown', handleClick)
   }, [])
+  
+  useEffect(() => {
+    const onScroll = () => {
+      const scrollPosition = window.innerHeight + window.scrollY;
+      const fullHeight = document.body.offsetHeight;
+
+      if (fullHeight - scrollPosition < 250 && !isLoading) {
+        setLoadNextArticles(true)
+        loadMore();
+      }
+    };
+
+    window.addEventListener("scroll", onScroll);
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [isLoading]);
+
 
   const onSearch = (text: string) => {
     setSearchText(text)
@@ -52,14 +79,14 @@ export default function HomePage() {
     setShowHistory(text !== '')
   }
 
+  // debounce поиска
   useEffect(() => {
     const handler = setTimeout(() => {
       if (searchText === "") return;
-
       setSearchParams({ text: searchText } as SearchParams)
       getSearchResults()
       setSearching(false)
-    }, 500) // ← задержка 500 мс
+    }, 500)
 
     return () => clearTimeout(handler)
   }, [searchText])
@@ -74,14 +101,13 @@ export default function HomePage() {
   const filteredHistory = searchingHistory?.filter(v =>
     v.toLowerCase().includes(searchText.toLowerCase())
   )
-  
-  const showSkeleton = searching || isLoading
+
+  const showSkeleton = (searching || isLoading) && !loadNextArticles
 
   return (
-    <div 
-      className="w-full flex flex-col px-4 pt-6 pb-20 space-y-1 min-h-screen">
+    <div className="w-full flex flex-col px-4 pt-6 pb-20 space-y-1 min-h-screen">
 
-      {!searching && <div className="text-2xl font-semibold mb-6">Новости</div>}
+      {isParamsEmpty && <div className="text-2xl font-semibold mb-6">Новости</div>}
 
       <div className="flex items-center gap-3 w-full">
 
@@ -91,6 +117,7 @@ export default function HomePage() {
 
           <input
             type="text"
+            value={searchText}
             onChange={(v) => onSearch(v.target.value)}
             placeholder="Введите строку поиска"
             className="ml-3 bg-transparent outline-none text-[15px] w-full"
@@ -107,7 +134,7 @@ export default function HomePage() {
                 {filteredHistory?.map((value) => (
                   <button
                     key={value}
-                    onClick={() => onHistoryClick(value)}    // 🔥 добавлено
+                    onClick={() => onHistoryClick(value)}
                     className="hover:bg-gray-300 px-3 text-gray-700 py-2 w-full text-left"
                   >
                     {value}
@@ -121,18 +148,19 @@ export default function HomePage() {
 
         <ArticleFilterSheet onSubmit={() => { }} />
       </div>
-      {/* RESULTS item.source.replace("https://", "").split("/")[0] */}
+
+      {/* RESULTS */}
       <div className="flex flex-col gap-3 mt-6">
-        {!searching && <div className="font-semibold text-2xl">Для вас</div>}
+        {isParamsEmpty && <div className="font-semibold text-2xl">Для вас</div>}
         <div className="flex flex-col gap-6">
-          {showSkeleton && 
+          {showSkeleton &&
             <>
               {Array.from({ length: 5 }).map((_, idx) => (
                 <div key={idx} className="bg-white rounded-2xl shadow-sm border border-gray-200 p-5">
                   <div className="flex gap-2 pb-2">
                     <Skeleton className="h-6 w-[50px]" /> <Skeleton className="h-6 w-[50px]" />
                   </div>
-                  
+
                   <h2 className="font-semibold text-[17px] leading-snug">
                     <Skeleton className="h-6 w-[250px]" />
                   </h2>
@@ -142,7 +170,9 @@ export default function HomePage() {
                     <Skeleton className="h-4 max-w-[600px]" />
                   </div>
 
-                  <div className="text-gray-500 text-xs mt-4"><Skeleton className="h-4 w-[250px]" /></div>
+                  <div className="text-gray-500 text-xs mt-4">
+                    <Skeleton className="h-4 w-[250px]" />
+                  </div>
                 </div>
               ))}
             </>
@@ -150,9 +180,10 @@ export default function HomePage() {
 
           {searchResults?.articles.map((item, idx) => {
             return (
-              <div key={idx} 
+              <div key={idx}
                    className="article-card bg-white rounded-2xl shadow-sm hover:scale-[1.02] duration-600 hover:shadow-md transition-all
                    border border-gray-200 p-5">
+
                 <div className="flex gap-2">
                   {item.tags.map((tag, idx) => {
                     return (
@@ -167,7 +198,6 @@ export default function HomePage() {
                   }
                 </div>
 
-
                 <h2 className="font-semibold text-[17px] leading-snug">
                   {item.title}
                 </h2>
@@ -180,14 +210,15 @@ export default function HomePage() {
                 </a>
 
                 <p className="text-[14px] text-gray-700 mt-3 leading-relaxed">
-                  {item.title}
+                  {item.summary || item.title}
                 </p>
 
                 <div className="text-gray-500 text-xs mt-4">{formatDate(item.onDateCreated)}</div>
               </div>
             )
-          })
-          }
+          })}
+
+          {loadNextArticles && <CommonSpinner variant={"outline"} title={"Загрузка..."}/>}
         </div>
       </div>
 
