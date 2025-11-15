@@ -3,6 +3,7 @@ import { devtools } from "zustand/middleware";
 import { api } from "@/api/api";
 import { IArticle, IArticleCard, ISearchResult } from '@/store/types'
 import { siteConfig } from "@/config/site.config";
+import { filterUniqueArticles } from '@/utils/utils'
 
 export enum SourceType {
 	Habr,
@@ -103,7 +104,7 @@ export const useArticleSearch = create<SearchStore>()(
 
 		// === ПЕРВАЯ ЗАГРУЗКА ===
 		getSearchResults: async () => {
-			const { searchParams, limit } = get();
+			const { searchParams } = get();
 
 			try {
 				set({
@@ -117,16 +118,16 @@ export const useArticleSearch = create<SearchStore>()(
 					await new Promise(res => setTimeout(res, 500));
 
 					const mock: ISearchResult = {
-						articles: [
+						articles: filterUniqueArticles([
 							{
 								id: "mock-1",
 								title: "Mock Article 1",
 								tags: ["frontend", "react"],
 								creation_date: new Date(),
 								source: "https://habr.com/",
-								summary: "Lorem ipsum..."
+								summary: "Lorem ipsum."
 							},
-						],
+						]),
 						summarize: "Моковые данные"
 					};
 
@@ -137,19 +138,26 @@ export const useArticleSearch = create<SearchStore>()(
 
 					return;
 				}
-				const { data } = await api.get<ISearchResult>(
-					`/v1/articles/search`, {
+
+				// → Всегда ставим limit = 50
+				const { data } = await api.get<IArticleCard[]>(
+					`/v1/articles/search`,
+					{
 						params: {
 							...searchParams,
 							offset: 0,
-							limit
+							limit: 50,
 						}
-					});
+					}
+				);
+
+				const unique = filterUniqueArticles(data);
 
 				set({
-					searchResults: data,
-					offset: data.articles.length
+					searchResults: { articles: unique, summarize: "" },
+					offset: unique.length
 				});
+
 			} catch {
 				set({ error: "Ошибка при получении результатов поиска" });
 			} finally {
@@ -159,13 +167,13 @@ export const useArticleSearch = create<SearchStore>()(
 			return null;
 		},
 
-		// === ДОГРУЗКА СТАТЕЙ ===
+
+		// === ДОГРУЗКА СТАТЕЙ === + костыль :)
 		loadMore: async () => {
 			const {
 				searchParams,
 				searchResults,
 				offset,
-				limit,
 				isLoading
 			} = get();
 
@@ -179,43 +187,49 @@ export const useArticleSearch = create<SearchStore>()(
 				if (siteConfig.showMockData) {
 					await new Promise(res => setTimeout(res, 500));
 
-					const extra: IArticleCard[] = [
+					const extra = filterUniqueArticles([
 						{
 							id: "mock-extra",
 							title: "Next mock",
 							tags: ["nextjs"],
 							creation_date: new Date(),
 							source: "https://dev.to/",
-							summary: "extra..."
+							summary: "extra."
 						}
-					];
+					]);
+
+					const merged = filterUniqueArticles([
+						...searchResults.articles,
+						...extra
+					]);
 
 					set({
 						searchResults: {
 							...searchResults,
-							articles: [...searchResults.articles, ...extra]
+							articles: merged
 						},
-						offset: offset + extra.length
+						offset: merged.length
 					});
 
 					return;
 				}
 
-				const { data } = await api.get<ISearchResult>(
+				// → limit = 50 всегда
+				const { data } = await api.get<IArticleCard[]>(
 					`/v1/articles/search`,
 					{
 						params: {
 							...searchParams,
 							offset,
-							limit
+							limit: 50
 						}
 					}
 				);
 
-				const merged = [
+				const merged = filterUniqueArticles([
 					...searchResults.articles,
-					...data.articles
-				];
+					...data
+				]);
 
 				set({
 					searchResults: {
@@ -231,6 +245,7 @@ export const useArticleSearch = create<SearchStore>()(
 				set({ isLoading: false });
 			}
 		},
+
 
 		getSearchingHistory: () => {
 			

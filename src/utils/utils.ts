@@ -1,4 +1,6 @@
-﻿export function normalize(text: string) {
+﻿import { IArticleCard } from '@/store/types'
+
+export function normalize(text: string) {
 	return text.trim().toLowerCase();
 }
 
@@ -10,6 +12,26 @@ export function loadHistory(): string[] {
 	} catch {
 		return [];
 	}
+}
+
+export function filterUniqueArticles(arr: IArticleCard[]): IArticleCard[] {
+	const seen = new Set<string>();
+	const result: IArticleCard[] = [];
+
+	for (const a of arr) {
+		if (!a.title) continue;
+
+		const key = a.title.length > 10
+			? a.title.slice(0, 10).toLowerCase()
+			: a.title.toLowerCase();
+
+		if (!seen.has(key)) {
+			seen.add(key);
+			result.push(a);
+		}
+	}
+
+	return result.slice(0, 15); // максимум 15 уникальных
 }
 
 export function getLastQuery(): string | null {

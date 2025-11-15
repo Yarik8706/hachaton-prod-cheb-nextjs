@@ -65,7 +65,7 @@ export function UserInterestsDialog({ open, onOpenChange, onChange }: Props) {
 								setValidate(true)
 								return
 							}
-							setInterests(interests);
+							onChange(interests)
 							onOpenChange(false)
 						}}
 						className="bg-yellow-400 text-black hover:bg-yellow-500"
