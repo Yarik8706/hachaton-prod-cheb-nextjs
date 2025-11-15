@@ -14,6 +14,9 @@ import { ArticleFilterSheet } from '@/components/sheets/ArticleFilterSheet'
 import { Skeleton } from '@/components/ui/skeleton';
 import CommonSpinner from '@/components/common/CommonSpinner'
 import { useRouter } from 'next/navigation'
+import { useGSAP } from '@gsap/react'
+import { gsap} from "@/utils/gsap"
+import { loadHistory, saveQuery } from '@/utils/utils'
 
 export default function HomePage() {
   
@@ -41,6 +44,7 @@ export default function HomePage() {
     isLoading,
     searchingHistory,
     getSearchingHistory,
+    setSearchingHistory,
     getSearchResults,
     searchParams,
     loadMore                // ← ДОБАВЛЕНО
@@ -67,6 +71,24 @@ export default function HomePage() {
     setSearchText(params.get("text") || "")
 
   }, [params])
+  
+  useGSAP(() => {
+    if (searchResults == undefined ||
+      searchResults?.articles.length <= 0 || searchResults?.articles.length > 10) return
+    
+    gsap.fromTo(".article-card > *", {
+      opacity: 0,
+      y: 20,
+      stagger: 0.1,
+      duration: 0.5
+    }, {
+      opacity: 1,
+      y: 0,
+      stagger: 0.1,
+      duration: 0.5
+    })
+    
+  }, [searchResults])
 
   // клик вне поиска
   useEffect(() => {
@@ -96,11 +118,21 @@ export default function HomePage() {
     return () => window.removeEventListener("scroll", onScroll);
   }, [isLoading]);
 
+  useEffect(() => {
+    updateHistory()
+  }, []);
+  
+  const updateHistory = () => {
+    const history = loadHistory();
+    setSearchingHistory(history);
+  }
 
   const onSearch = (text: string) => {
     setSearchText(text)
     setSearching(text !== '')
     setShowHistory(text !== '')
+    saveQuery(text)
+    updateHistory()
   }
 
   const handleFiltersSubmit = () => {
@@ -112,16 +144,14 @@ export default function HomePage() {
     setSearchParams({
       text: searchText,
       tags: [],
-      dateSearchPeriod: DateSearchPeriod.none,
+      date: DateSearchPeriod.none,
       sourceType: SourceType.All,
     } as SearchParams)
     handleFiltersSubmit()
   }
 
-  // debounce поиска
   useEffect(() => {
     const handler = setTimeout(() => {
-      if (searchText === "") return;
       setSearchParams({ text: searchText } as SearchParams)
       getSearchResults()
       setSearching(false)
@@ -206,7 +236,7 @@ export default function HomePage() {
       {/* RESULTS */}
       <div className="flex flex-col gap-3 mt-6">
         {isParamsEmpty && <div className="font-semibold text-2xl">Для вас</div>}
-        <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-6 article-container">
           {showSkeleton &&
             <>
               {Array.from({ length: 5 }).map((_, idx) => (

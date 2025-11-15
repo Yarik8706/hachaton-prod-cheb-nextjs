@@ -39,7 +39,8 @@ export const useProfile = create<ProfileStore>()(
           return;
         }
 
-        const { data } = await api.get<IProfile>("/api/v1/users/profile");
+        const { data } = await api.get<IProfile>(
+          "/v1/users/me");
         set({ profile: data });
 
       } catch (error) {
@@ -64,7 +65,7 @@ export const useProfile = create<ProfileStore>()(
           return;
         }
 
-        await api.patch("/api/v1/users/interests", { interests });
+        await api.post("/v1/users/interests/set", { interests });
 
         profile.interests = interests;
         set({ profile });

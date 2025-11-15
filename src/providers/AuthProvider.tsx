@@ -34,6 +34,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
   }
 
   useEffect(() => {
+    if (isAuth) return; 
     tokenUpdate()
 
     // if (localStorage.getItem("accessToken") == null) return;

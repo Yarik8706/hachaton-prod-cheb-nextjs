@@ -64,7 +64,7 @@ export function ArticleFilterSheet({ onSubmit, currentText }: IProps) {
     setSearchParams({
       text: currentText,
       tags,
-      dateSearchPeriod,
+      date: dateSearchPeriod,
       sourceType,
     });
 
@@ -80,7 +80,7 @@ export function ArticleFilterSheet({ onSubmit, currentText }: IProps) {
     setSearchParams({
       text: currentText,
       tags: [],
-      dateSearchPeriod: DateSearchPeriod.none,
+      date: DateSearchPeriod.none,
       sourceType: SourceType.All,
     });
 

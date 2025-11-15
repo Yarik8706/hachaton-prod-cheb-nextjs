@@ -25,7 +25,6 @@ import YandexButton from '@/components/utils/YandexButton'
 const formSchema = z.object({
 	email: z.string().email("Укажите корректный email"),
 	password: z.string().min(6, "Пароль должен быть не менее 6 символов"),
-	interests: z.array(z.string()).min(1, "Добавьте хотя бы один интерес"),
 })
 
 export default function RegForm() {
@@ -57,7 +56,7 @@ export default function RegForm() {
 
 	const form = useForm<z.infer<typeof formSchema>>({
 		resolver: zodResolver(formSchema),
-		defaultValues: { email: '', password: '', interests: [] },
+		defaultValues: { email: '', password: '' },
 		mode: 'onChange',
 	})
 
@@ -80,7 +79,10 @@ export default function RegForm() {
 		if (interests.length === 0) setInterestsValidate(true)
 		await registerFn(data)
 			.then(response => {
-				const accessToken = response.headers["authorization"]?.split(" ")[1];
+				console.log("response")
+				console.log(response)
+				const accessToken = response.data.access;
+				console.log(accessToken)
 				if (accessToken) {
 					setToken(accessToken);
 					tokenUpdate();
@@ -111,7 +113,10 @@ export default function RegForm() {
 
 				<CardContent>
 					<Form {...form}>
-						<form onSubmit={form.handleSubmit(onSubmit)} id='reg-form'>
+						<form onSubmit={(e) => {
+							console.log("form submit event fired");
+							return form.handleSubmit(onSubmit)(e);
+						}} id='reg-form'>
 							<div className='flex flex-col gap-4'>
 
 								<FormField
@@ -158,14 +163,15 @@ export default function RegForm() {
 								</div>
 
 							</div>
+
+							
 						</form>
 					</Form>
 				</CardContent>
 
-				<CardFooter className='flex flex-col gap-2'>
+				<CardFooter className='flex flex-col gap-2 pt-3'>
 					<button type='submit'
 									form='reg-form'
-
 									className='w-full bg-[var(--main-color)] hover:bg-yellow-500 transition text-black px-5 py-3 rounded-xl text-sm font-medium'>
 						Зарегистрироваться
 					</button>

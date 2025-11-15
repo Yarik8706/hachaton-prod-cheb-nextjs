@@ -21,7 +21,7 @@ export enum DateSearchPeriod {
 export interface SearchParams {
 	text: string;
 	tags: string[];
-	dateSearchPeriod: DateSearchPeriod;
+	date: DateSearchPeriod;
 	sourceType: SourceType;
 }
 
@@ -35,14 +35,14 @@ interface SearchStore {
 
 	offset: number;      // ← добавлено
 	limit: number;       // ← добавлено
-	lastId: string | null;  // ← добавлено
 
 	setSearchParams: (params: SearchParams) => void;
 
 	getSearchResults: () => Promise<null>;
 	loadMore: () => Promise<void>;     // ← добавлено
 
-	getSearchingHistory: () => Promise<null>;
+	getSearchingHistory: () => null;
+	setSearchingHistory: (history: string[]) => null;
 	getArticleById: (id: string) => Promise<IArticle | null>;
 }
 
@@ -58,11 +58,15 @@ export const useArticleSearch = create<SearchStore>()(
 		offset: 0,
 		limit: 10,
 		lastId: null,
+		
+		setSearchingHistory: (history: string[]) => {
+			set({ searchingHistory: history });
+		},
 
 		setSearchParams: (params: SearchParams) => {
 			const cleaned: Record<string, any> = convertURLParamsToRecord(params);
 
-			if (params.dateSearchPeriod === DateSearchPeriod.none) {
+			if (params.date === DateSearchPeriod.none) {
 				delete cleaned.dateSearchPeriod;
 			}
 
@@ -100,8 +104,7 @@ export const useArticleSearch = create<SearchStore>()(
 				set({
 					isLoading: true,
 					error: null,
-					offset: 0,
-					lastId: null
+					offset: 0
 				});
 
 				// MOCK режим
@@ -124,15 +127,14 @@ export const useArticleSearch = create<SearchStore>()(
 
 					set({
 						searchResults: mock,
-						offset: mock.articles.length,
-						lastId: mock.articles.at(-1)?.id || null,
+						offset: mock.articles.length
 					});
 
 					return;
 				}
 
 				const { data } = await api.get<ISearchResult>(
-					`/api/v1/search`, {
+					`/v1/articles/search`, {
 						params: {
 							...searchParams,
 							offset: 0,
@@ -142,8 +144,7 @@ export const useArticleSearch = create<SearchStore>()(
 
 				set({
 					searchResults: data,
-					offset: data.articles.length,
-					lastId: data.articles.at(-1)?.id || null
+					offset: data.articles.length
 				});
 			} catch {
 				set({ error: "Ошибка при получении результатов поиска" });
@@ -161,7 +162,6 @@ export const useArticleSearch = create<SearchStore>()(
 				searchResults,
 				offset,
 				limit,
-				lastId,
 				isLoading
 			} = get();
 
@@ -191,21 +191,19 @@ export const useArticleSearch = create<SearchStore>()(
 							...searchResults,
 							articles: [...searchResults.articles, ...extra]
 						},
-						offset: offset + extra.length,
-						lastId: extra.at(-1)?.id || lastId,
+						offset: offset + extra.length
 					});
 
 					return;
 				}
 
 				const { data } = await api.get<ISearchResult>(
-					`/api/v1/search`,
+					`/v1/articles/search`,
 					{
 						params: {
 							...searchParams,
 							offset,
-							limit,
-							lastId
+							limit
 						}
 					}
 				);
@@ -220,8 +218,7 @@ export const useArticleSearch = create<SearchStore>()(
 						...searchResults,
 						articles: merged
 					},
-					offset: merged.length,
-					lastId: merged.at(-1)?.id || null,
+					offset: merged.length
 				});
 
 			} catch {
@@ -231,23 +228,8 @@ export const useArticleSearch = create<SearchStore>()(
 			}
 		},
 
-		getSearchingHistory: async () => {
-			try {
-				if (siteConfig.showMockData) {
-					await new Promise(res => setTimeout(res, 500));
-
-					const mockHistory = ["react", "zustand", "api", "frontend"];
-					set({ searchingHistory: mockHistory });
-					return mockHistory;
-				}
-
-				const { data } = await api.get<string[]>(`/api/v1/search/history`);
-				set({ searchingHistory: data });
-				return null;
-			} catch {
-				set({ error: "Ошибка при загрузке истории поиска" });
-				return null;
-			}
+		getSearchingHistory: () => {
+			
 		},
 
 		getArticleById: async (id: string) => {
@@ -267,7 +249,7 @@ export const useArticleSearch = create<SearchStore>()(
 				}
 				
 				
-				const { data } = await api.get<IArticle>(`/api/v1/articles/${id}`);
+				const { data } = await api.get<IArticle>(`/v1/articles/${id}`);
 				return data;
 			} catch {
 				set({ error: "Ошибка при получении статьи" });
@@ -285,7 +267,7 @@ export function convertURLParamsToRecord(params : SearchParams) {
 	return {
 		text: params.text,
 		tags: params.tags,
-		dateSearchPeriod: params.dateSearchPeriod,
+		dateSearchPeriod: params.date,
 		sourceType: params.sourceType
 	}
 }

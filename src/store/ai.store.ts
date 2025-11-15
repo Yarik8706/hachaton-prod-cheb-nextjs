@@ -26,7 +26,7 @@ export const useAi = create<AiStore>()(
 					set({ summary: "Mock summary" });
 					return;
 				}
-				const { data } = await api.get<string>(`/api/v1//${id}/summarize`);
+				const { data } = await api.get<string>(`/v1/articles/${id}/summarize`);
 				set({ summary: data });
 			} catch {
 				set({ error: "Ошибка при получении суммирования статьи" });
