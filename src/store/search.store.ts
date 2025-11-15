@@ -65,7 +65,7 @@ export const useArticleSearch = create<SearchStore>()(
 
 		setSearchParams: (params: SearchParams) => {
 			const cleaned: Record<string, any> = convertURLParamsToRecord(params);
-
+			
 			if (params.date === DateSearchPeriod.none) {
 				delete cleaned.dateSearchPeriod;
 			}
@@ -93,7 +93,12 @@ export const useArticleSearch = create<SearchStore>()(
 			});
 
 			const newUrl = `${window.location.pathname}?${search.toString()}`;
+			
 			window.history.replaceState(null, "", newUrl);
+			
+			set({
+				searchParams: params
+			})
 		},
 
 		// === ПЕРВАЯ ЗАГРУЗКА ===
@@ -117,7 +122,7 @@ export const useArticleSearch = create<SearchStore>()(
 								id: "mock-1",
 								title: "Mock Article 1",
 								tags: ["frontend", "react"],
-								onDateCreated: new Date(),
+								creation_date: new Date(),
 								source: "https://habr.com/",
 								summary: "Lorem ipsum..."
 							},
@@ -132,7 +137,6 @@ export const useArticleSearch = create<SearchStore>()(
 
 					return;
 				}
-
 				const { data } = await api.get<ISearchResult>(
 					`/v1/articles/search`, {
 						params: {
@@ -180,7 +184,7 @@ export const useArticleSearch = create<SearchStore>()(
 							id: "mock-extra",
 							title: "Next mock",
 							tags: ["nextjs"],
-							onDateCreated: new Date(),
+							creation_date: new Date(),
 							source: "https://dev.to/",
 							summary: "extra..."
 						}
@@ -242,7 +246,7 @@ export const useArticleSearch = create<SearchStore>()(
 						id: "mock-1",
 						title: "Mock Article 1",
 						tags: ["frontend", "react"],
-						onDateCreated: new Date(),
+						creation_date: new Date(),
 						source: "https://habr.com/",
 						text: "Т-Инвестиции упростили доступ к российскому фондовому рынку для клиентов-иностранных граждан. Теперь нерезиденты-владельцы карты Black смогут открыть брокерский счет удаленно — без повторной встречи с представителем банка — и сразу начать инвестировать с суммой от 10 рублей. "
 					} as IArticle

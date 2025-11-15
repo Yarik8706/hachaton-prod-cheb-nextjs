@@ -20,6 +20,7 @@ export function UserInterestsDialog({ open, onOpenChange, onChange }: Props) {
 	const {profile} = useProfile()
 	const [interests, setInterests] = useState<string[]>(
 		() => profile?.interests || []);
+	const [validate, setValidate] = useState(false)
 
 	useEffect(() => {
 		setInterests(profile?.interests || []);
@@ -54,14 +55,22 @@ export function UserInterestsDialog({ open, onOpenChange, onChange }: Props) {
 					interests={interests}
 					addInterest={addInterest}
 					removeInterest={removeInterest}
+					validate={validate}
 				/>
 				<div className="flex justify-end mt-6">
 					<Button
 						disabled={interests.length === 0}
-						onClick={() => onOpenChange(false)}
+						onClick={() => {
+							if (interests.length === 0) {
+								setValidate(true)
+								return
+							}
+							setInterests(interests);
+							onOpenChange(false)
+						}}
 						className="bg-yellow-400 text-black hover:bg-yellow-500"
 					>
-						Понятно
+						Поставить
 					</Button>
 				</div>
 			</DialogContent>

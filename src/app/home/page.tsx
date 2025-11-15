@@ -152,6 +152,7 @@ export default function HomePage() {
 
   useEffect(() => {
     const handler = setTimeout(() => {
+      console.log("debounce")
       setSearchParams({ text: searchText } as SearchParams)
       getSearchResults()
       setSearching(false)
@@ -172,6 +173,9 @@ export default function HomePage() {
   )
 
   const showSkeleton = (searching || isLoading) && !loadNextArticles
+
+  console.log("articles len " + searchResults?.articles.length)
+  console.log(searchResults?.articles)
 
   return (
     <div className="w-full flex flex-col px-4 pt-6 pb-20 space-y-1 min-h-screen">
@@ -298,7 +302,7 @@ export default function HomePage() {
                   {item.summary || item.title}
                 </p>
 
-                <div className="text-gray-500 text-xs mt-4">{formatDate(item.onDateCreated)}</div>
+                <div className="text-gray-500 text-xs mt-4">{formatDate(item.creation_date)}</div>
               </div>
             )
           })}

@@ -105,7 +105,7 @@ export default function ArticlePage() {
 
 			{/* ===== Дата и источник ===== */}
 			<div className="text-gray-500 text-sm mb-8">
-				{new Date(article.onDateCreated).toLocaleDateString("ru-RU")}
+				{new Date(article.creation_date).toLocaleDateString("ru-RU")}
 				{" • "}
 				<span className="text-blue-600 break-all">{article.source}</span>
 			</div>

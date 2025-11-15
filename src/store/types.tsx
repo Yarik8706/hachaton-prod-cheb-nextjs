@@ -14,7 +14,7 @@ export interface IArticle {
   id: string;
   title: string;
   tags: string[];
-  onDateCreated: Date;
+  creation_date: Date;
   source: string
   text: string
 }
@@ -25,5 +25,5 @@ export interface IArticleCard {
   title: string;
   summary: string;
   tags: string[];
-  onDateCreated: Date;
+  creation_date: Date;
 }
