@@ -20,10 +20,10 @@ export enum DateSearchPeriod {
 }
 
 export interface SearchParams {
-	text: string;
-	tags: string[];
-	date: DateSearchPeriod;
-	sourceType: SourceType;
+        text: string;
+        tags: string[];
+        date: DateSearchPeriod;
+        sourceType: SourceType;
 }
 
 interface SearchStore {
@@ -64,43 +64,37 @@ export const useArticleSearch = create<SearchStore>()(
 			set({ searchingHistory: history });
 		},
 
-		setSearchParams: (params: SearchParams) => {
-			const cleaned: Record<string, any> = convertURLParamsToRecord(params);
-			
-			if (params.date === DateSearchPeriod.none) {
-				delete cleaned.dateSearchPeriod;
-			}
+                setSearchParams: (params: SearchParams) => {
+                        const cleaned = convertURLParamsToRecord(params);
+                        const search = new URLSearchParams(window.location.search);
 
-			if (params.sourceType === SourceType.All) {
-				delete cleaned.sourceType;
-			}
+                        search.delete("search_text");
+                        search.delete("date");
+                        search.delete("source");
+                        search.delete("tags");
 
-			if (!params.tags || params.tags.length === 0) {
-				delete cleaned.tags;
-			}
+                        if (cleaned.search_text) {
+                                search.set("search_text", cleaned.search_text);
+                        }
 
-			if (!params.text || params.text.trim() === "") {
-				delete cleaned.text;
-			}
+                        if (cleaned.date) {
+                                search.set("date", cleaned.date);
+                        }
 
-			const search = new URLSearchParams(window.location.search);
+                        if (cleaned.source) {
+                                search.set("source", cleaned.source);
+                        }
 
-			Object.keys(params).forEach((key) => {
-				if (cleaned[key] === undefined || cleaned[key] === null) {
-					search.delete(key);
-				} else {
-					search.set(key, String(cleaned[key]));
-				}
-			});
+                        cleaned.tags?.forEach(tag => search.append("tags", tag));
 
-			const newUrl = `${window.location.pathname}?${search.toString()}`;
-			
-			window.history.replaceState(null, "", newUrl);
-			
-			set({
-				searchParams: params
-			})
-		},
+                        const newUrl = `${window.location.pathname}?${search.toString()}`;
+
+                        window.history.replaceState(null, "", newUrl);
+
+                        set({
+                                searchParams: params
+                        })
+                },
 
 		// === ПЕРВАЯ ЗАГРУЗКА ===
 		getSearchResults: async () => {
@@ -140,16 +134,15 @@ export const useArticleSearch = create<SearchStore>()(
 				}
 
 				// → Всегда ставим limit = 50
-				const { data } = await api.get<IArticleCard[]>(
-					`/v1/articles/search`,
-					{
-						params: {
-							...searchParams,
-							offset: 0,
-							limit: 50,
-						}
-					}
-				);
+                                const params = buildSearchQueryParams(searchParams, 0, 50);
+
+                                const { data } = await api.get<IArticleCard[]>(
+                                        `/v1/articles/search`,
+                                        {
+                                                params,
+                                                paramsSerializer: (params) => params.toString(),
+                                        }
+                                );
 
 				const unique = filterUniqueArticles(data);
 
@@ -215,16 +208,15 @@ export const useArticleSearch = create<SearchStore>()(
 				}
 
 				// → limit = 50 всегда
-				const { data } = await api.get<IArticleCard[]>(
-					`/v1/articles/search`,
-					{
-						params: {
-							...searchParams,
-							offset,
-							limit: 50
-						}
-					}
-				);
+                                const params = buildSearchQueryParams(searchParams, offset, 50);
+
+                                const { data } = await api.get<IArticleCard[]>(
+                                        `/v1/articles/search`,
+                                        {
+                                                params,
+                                                paramsSerializer: (params) => params.toString(),
+                                        }
+                                );
 
 				const merged = filterUniqueArticles([
 					...searchResults.articles,
@@ -283,10 +275,52 @@ export const useArticleSearch = create<SearchStore>()(
 
 
 export function convertURLParamsToRecord(params : SearchParams) {
-	return {
-		text: params.text,
-		tags: params.tags,
-		dateSearchPeriod: params.date,
-		sourceType: params.sourceType
-	}
+        const dateMap: Record<DateSearchPeriod, string | null> = {
+                [DateSearchPeriod.day]: "t",
+                [DateSearchPeriod.month]: "m",
+                [DateSearchPeriod.year]: "y",
+                [DateSearchPeriod.none]: null,
+        };
+
+        const sourceMap: Record<SourceType, string | null> = {
+                [SourceType.Habr]: "habr",
+                [SourceType.Devto]: "devto",
+                [SourceType.Medium]: "medium",
+                [SourceType.All]: null,
+        };
+
+        const cleanedTags = (params.tags || [])
+                .map(tag => tag.trim())
+                .filter(Boolean);
+
+        return {
+                search_text: params.text?.trim() || undefined,
+                tags: cleanedTags.length ? cleanedTags : undefined,
+                date: params.date !== undefined ? dateMap[params.date] ?? undefined : undefined,
+                source: params.sourceType !== undefined ? sourceMap[params.sourceType] ?? undefined : undefined,
+        }
+}
+
+function buildSearchQueryParams(params: SearchParams | null, offset: number, limit: number) {
+        const search = new URLSearchParams();
+        const cleaned = params ? convertURLParamsToRecord(params) : {};
+
+        if (cleaned.search_text) {
+                search.set("search_text", cleaned.search_text);
+        }
+
+        if (cleaned.date) {
+                search.set("date", cleaned.date);
+        }
+
+        if (cleaned.source) {
+                search.set("source", cleaned.source);
+        }
+
+        cleaned.tags?.forEach(tag => search.append("tags", tag));
+
+        search.set("offset", String(offset));
+        search.set("limit", String(limit));
+
+        return search;
 }
