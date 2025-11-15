@@ -1,7 +1,11 @@
 "use client";
 
-import RegPage from "@/components/pages/RegPage";
+import dynamic from "next/dynamic";
+
+const RegPage = dynamic(() => import("@/components/pages/RegPage"), {
+  ssr: false,
+});
 
 export default function RegisterPage() {
-  return <RegPage/>
+  return <RegPage />;
 }

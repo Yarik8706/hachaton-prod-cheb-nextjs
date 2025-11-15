@@ -48,14 +48,34 @@ export default function HomePage() {
 
   const onSearch = (text: string) => {
     setSearchText(text)
-    setSearchParams({ text } as SearchParams)
     setSearching(text !== '')
     setShowHistory(text !== '')
+  }
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      if (searchText === "") return;
+
+      setSearchParams({ text: searchText } as SearchParams)
+      getSearchResults()
+      setSearching(false)
+    }, 500) // ← задержка 500 мс
+
+    return () => clearTimeout(handler)
+  }, [searchText])
+
+  const onHistoryClick = (value: string) => {
+    setSearchText(value)
+    setSearchParams({ text: value } as SearchParams)
+    setShowHistory(false)
+    setSearching(true)
   }
 
   const filteredHistory = searchingHistory?.filter(v =>
     v.toLowerCase().includes(searchText.toLowerCase())
   )
+  
+  const showSkeleton = searching || isLoading
 
   return (
     <div className="w-full flex flex-col px-4 pt-6 pb-20 space-y-1 min-h-screen">
@@ -75,7 +95,7 @@ export default function HomePage() {
             className="ml-3 bg-transparent outline-none text-[15px] w-full"
           />
 
-          {searching && (
+          {showHistory && (
             <div className="w-full absolute left-0 top-[100%] z-40">
               <div className="w-full bg-white rounded-xl flex flex-col py-1 mt-1 shadow-2xl overflow-hidden">
 
@@ -86,6 +106,7 @@ export default function HomePage() {
                 {filteredHistory?.map((value) => (
                   <button
                     key={value}
+                    onClick={() => onHistoryClick(value)}    // 🔥 добавлено
                     className="hover:bg-gray-300 px-3 text-gray-700 py-2 w-full text-left"
                   >
                     {value}
@@ -103,7 +124,7 @@ export default function HomePage() {
       <div className="flex flex-col gap-3 mt-6">
         {!searching && <div className="font-semibold text-2xl">Для вас</div>}
         <div className="flex flex-col gap-6">
-          {isLoading && 
+          {showSkeleton && 
             <>
               {Array.from({ length: 5 }).map((_, idx) => (
                 <div key={idx} className="bg-white rounded-2xl shadow-sm border border-gray-200 p-5">
