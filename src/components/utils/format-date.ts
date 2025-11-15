@@ -3,5 +3,5 @@
 		day: 'numeric',
 		month: 'short',
 		year: 'numeric'
-	}).format(date);
+	}).format(new Date(date));
 };
