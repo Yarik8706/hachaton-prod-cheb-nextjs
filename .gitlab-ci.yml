@@ -39,7 +39,7 @@ dev-publish:
     entrypoint: [""]
   script:
     - mkdir -p $DOCKER_CONFIG
-    - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$DEV_DOCKER_USERNAME\",\"password\":\"$DEV_DOCKER_PASSWORD\"}}}" \
+    - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" \
       > $DOCKER_CONFIG/config.json
 
     - |

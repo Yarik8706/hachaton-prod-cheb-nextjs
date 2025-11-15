@@ -77,7 +77,7 @@ export const Intro = () => {
         <div className="h-full md:pt-12 w-full">
           <div
             id="intro"
-            className="mx-auto md:mr-auto py-24 w-full flex flex-col justify-between md:h-auto gap-12 h-full rounded-3xl bg-white/80 px-2 md:px-32 md:shadow-sm backdrop-blur dark:bg-gray-800/70"
+            className="mx-auto md:mr-auto py-24 w-full flex flex-col justify-between md:h-auto gap-12 h-full rounded-3xl px-2 md:px-32 dark:bg-gray-800/70"
           >
             <span className="inline-block rounded-full bg-[var(--main-color)]/60 px-4 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-regular-text-color">
               Стартуем вместе
