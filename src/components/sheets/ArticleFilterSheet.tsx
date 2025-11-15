@@ -154,7 +154,7 @@ export function ArticleFilterSheet({ onSubmit, currentText }: IProps) {
           </div>
         </div>
 
-        <SheetFooter className="mt-6 flex flex-col gap-3">
+        <SheetFooter className="mt-6 flex sm:flex-col flex-col gap-3">
           <SheetClose asChild>
             <Button onClick={handleApply} className="w-full">
               Применить

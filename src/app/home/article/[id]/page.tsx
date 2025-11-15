@@ -115,6 +115,7 @@ export default function ArticlePage() {
 				type="single"
 				collapsible
 				value={accordionValue}
+				defaultValue={""}
 				onValueChange={setAccordionValue}
 				className="mb-8"
 			>

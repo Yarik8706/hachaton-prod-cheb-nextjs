@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { Search } from 'lucide-react'
+import { Search, X } from 'lucide-react'
 import { useEffect, useState, useRef, useMemo } from 'react'
 import { useSearchParams } from 'next/navigation'
 import {
@@ -13,9 +13,11 @@ import { formatDate } from '@/components/utils/format-date'
 import { ArticleFilterSheet } from '@/components/sheets/ArticleFilterSheet'
 import { Skeleton } from '@/components/ui/skeleton';
 import CommonSpinner from '@/components/common/CommonSpinner'
+import { useRouter } from 'next/navigation'
 
 export default function HomePage() {
-
+  
+  const router = useRouter()
   const [searching, setSearching] = useState(false)
   const [searchText, setSearchText] = useState("")
   const params = useSearchParams()
@@ -83,7 +85,8 @@ export default function HomePage() {
       const scrollPosition = window.innerHeight + window.scrollY;
       const fullHeight = document.body.offsetHeight;
 
-      if (fullHeight - scrollPosition < 250 && !isLoading) {
+      if (fullHeight - scrollPosition < 250 && !isLoading && searchResults != undefined
+        && searchResults?.articles.length % 10 == 0) {
         setLoadNextArticles(true)
         loadMore();
       }
@@ -159,7 +162,7 @@ export default function HomePage() {
             className="ml-3 bg-transparent outline-none text-[15px] w-full"
           />
 
-          {showHistory && (
+          {showHistory && filteredHistory?.length !== 0 && (
             <div className="w-full absolute left-0 top-[100%] z-40">
               <div className="w-full bg-white rounded-xl flex flex-col py-1 mt-1 shadow-2xl overflow-hidden">
 
@@ -192,9 +195,9 @@ export default function HomePage() {
             <button
               type="button"
               onClick={handleClearFilters}
-              className="text-sm font-medium text-gray-700 hover:text-gray-900"
+              className="cursor-pointer bg-white hover:bg-gray-300 transition rounded-xl p-3 flex items-center justify-center"
             >
-              Очистить фильтры
+              <X className="text-black size-5"/>
             </button>
           )}
         </div>
@@ -232,7 +235,8 @@ export default function HomePage() {
           {searchResults?.articles.map((item, idx) => {
             return (
               <div key={idx}
-                   className="article-card bg-white rounded-2xl shadow-sm hover:scale-[1.02] duration-600 hover:shadow-md transition-all
+                   onClick={() => router.push(`/home/article/${item.id}`)}
+                   className="article-card cursor-pointer bg-white rounded-2xl shadow-sm hover:scale-[1.02] duration-600 hover:shadow-md transition-all
                    border border-gray-200 p-5">
 
                 <div className="flex gap-2">
