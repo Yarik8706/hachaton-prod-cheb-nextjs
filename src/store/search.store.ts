@@ -20,7 +20,7 @@ export enum DateSearchPeriod {
 	none,
 }
 
-interface SearchParams {
+export interface SearchParams {
 	text: string;
 	tags: string[];
 	dateSearchPeriod: DateSearchPeriod;
@@ -37,8 +37,8 @@ interface SearchStore {
 
 	setSearchParams: (params: SearchParams) => void;
 	getArticleById: (id: string) => Promise<IArticle | null>;
-	getSearchResults: () => null;
-	getSearchingHistory: () => null;
+	getSearchResults: () => Promise<null>;
+	getSearchingHistory: () => Promise<null>;
 }
 
 export const useArticleSearch = create<SearchStore>()(
@@ -87,7 +87,45 @@ export const useArticleSearch = create<SearchStore>()(
 
 		getSearchResults: async () => {
 			const { searchParams } = get();
-			if (!searchParams ) return null;
+			if (!searchParams) {
+				if (siteConfig.showMockData) {
+					await new Promise(res => setTimeout(res, 500));
+
+					const mock: ISearchResult = {
+						articles: [
+							{
+								id: "mock-1",
+								title: "For you article",
+								tags: ["frontend", "react"],
+								onDateCreated: new Date(),
+								source: "https://habr.com/fgdsgfdg",
+								summary: "Lorem ipsum dolor sit amet consectetur adipisicing elit. Lorem ipsum dolor sit amet consectetur adipisicing elit. Lorem ipsum dolor sit amet consectetur adipisicing elit."
+							},
+							{
+								id: "mock-2",
+								title: "Mock Article 2",
+								tags: ["backend", "nestjs"],
+								onDateCreated: new Date(),
+								source: "https://habr.com/fgdsgfdg",
+								summary: "Lorem ipsum dolor sit amet consectetur adipisicing elit. Lorem ipsum dolor sit amet consectetur adipisicing elit. Lorem ipsum dolor sit amet consectetur adipisicing elit."
+							}
+						],
+						summarize: "Моковые данные. Результаты поиска."
+					};
+
+					set({ searchResults: mock });
+					console.log(mock)
+					return
+				}
+
+				const { data } = await api.get<ISearchResult>(
+					`/api/v1/articles/me`
+				)
+				
+				set({ searchResults: data })
+				
+				return 
+			}
 
 			try {
 				set({ isLoading: true, error: null });
@@ -120,9 +158,9 @@ export const useArticleSearch = create<SearchStore>()(
 
 					set({ searchResults: mock });
 					console.log(mock)
-					return 
+					return
 				}
-				
+
 				let tags = ""
 				searchParams.tags.forEach(tag => {
 					tags += `&tags=${tag}`

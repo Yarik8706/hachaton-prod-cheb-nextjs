@@ -1,42 +1,31 @@
 ﻿"use client";
 
 import { Filter, Search } from 'lucide-react'
-import { useEffect, useState } from 'react'
-import { ArticleFilterSheet } from '@/components/sheets/ArticleFilterSheet'
+import { useEffect, useState, useRef } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { useArticleSearch } from '@/store/search.store'
+import { SearchParams, useArticleSearch } from '@/store/search.store'
 import { formatDate } from '@/components/utils/format-date'
-import {
-  DropdownMenu,
-  DropdownMenuContent, DropdownMenuItem,
-  DropdownMenuLabel, DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
+import { ArticleFilterSheet } from '@/components/sheets/ArticleFilterSheet'
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function HomePage() {
-  const [searching, setSearching] = useState(false)
-  const params = useSearchParams()
-  const { searchingHistory, getSearchingHistory, getSearchResults } = useArticleSearch()
 
-  const searchResults = [
-    {
-      id: "mock-1",
-      title: "Mock Article 1",
-      tags: ["frontend", "react"],
-      onDateCreated: new Date(),
-      source: "https://habr.com/fgdsgfdg",
-      summary: "Lorem ipsum dolor sit amet consectetur adipisicing elit. Lorem ipsum dolor sit amet consectetur adipisicing elit. Lorem ipsum dolor sit amet consectetur adipisicing elit."
-    },
-    {
-      id: "mock-2",
-      title: "Mock Article 2",
-      tags: ["backend", "nestjs"],
-      onDateCreated: new Date(),
-      source: "https://habr.com/fgdsgfdg",
-      summary: "Lorem ipsum dolor sit amet consectetur adipisicing elit. Lorem ipsum dolor sit amet consectetur adipisicing elit. Lorem ipsum dolor sit amet consectetur adipisicing elit."
-    }
-  ]
-  
+  const [searching, setSearching] = useState(false)
+  const [searchText, setSearchText] = useState("")   // 🔥
+  const params = useSearchParams()
+  const [showHistory, setShowHistory] = useState(false)
+
+  const {
+    searchResults,
+    setSearchParams,
+    isLoading,
+    searchingHistory,
+    getSearchingHistory,
+    getSearchResults
+  } = useArticleSearch()
+
+  const searchRef = useRef<HTMLDivElement|null>(null)
+
   useEffect(() => {
     getSearchingHistory()
     getSearchResults()
@@ -46,95 +35,136 @@ export default function HomePage() {
     getSearchResults()
   }, [params])
 
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (!searchRef.current) return
+      if (!searchRef.current.contains(e.target as Node)) {
+        setShowHistory(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [])
+
+  const onSearch = (text: string) => {
+    setSearchText(text)
+    setSearchParams({ text } as SearchParams)
+    setSearching(text !== '')
+    setShowHistory(text !== '')
+  }
+
+  const filteredHistory = searchingHistory?.filter(v =>
+    v.toLowerCase().includes(searchText.toLowerCase())
+  )
+
   return (
     <div className="w-full flex flex-col px-4 pt-6 pb-20 space-y-1 min-h-screen">
+
       {!searching && <div className="text-2xl font-semibold mb-6">Новости</div>}
+
       <div className="flex items-center gap-3 w-full">
-        <div className="flex items-center bg-[#e9ecf0] rounded-xl px-4 py-3 flex-1">
+
+        <div ref={searchRef} className="relative flex items-center bg-[#e9ecf0] rounded-xl px-4 py-3 flex-1">
+
           <Search className="size-5 text-gray-500" />
 
-          <DropdownMenu>
-            <DropdownMenuTrigger className="outline-none border-none">
-              <input
-                type="text"
-                onChange={(v,
-                ) => setSearching(v.target.value != '')}
-                placeholder="Введите строку поиска"
-                className="ml-3 bg-transparent outline-none text-[15px] w-full"
-              />
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              <DropdownMenuLabel>My Account</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem>Profile</DropdownMenuItem>
-              <DropdownMenuItem>Billing</DropdownMenuItem>
-              <DropdownMenuItem>Team</DropdownMenuItem>
-              <DropdownMenuItem>Subscription</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-          
-        </div>
+          <input
+            type="text"
+            onChange={(v) => onSearch(v.target.value)}
+            placeholder="Введите строку поиска"
+            className="ml-3 bg-transparent outline-none text-[15px] w-full"
+          />
 
-        {/*<ArticleFilterSheet onSubmit={() => {*/}
-        {/*}} />*/}
-      </div>
-      
-      
-      
-      <div className="rounded-xl bg-white px-2 py-2 space-y-2">
-        <div className="flex justify-between items-center">
-          <div>Недавние запросы</div>
-          <div className="py-2 px-4 rounded-xl bg-[#e9ecf0] border border-gray-300">x</div>
-        </div>
-        <div className="space-y-2 w-full">
-          <button className="py-2 px-3 rounded-xl bg-[#e9ecf0] border border-gray-300 w-full text-left">Запрос</button>
-        </div>
-      </div>
+          {searching && (
+            <div className="w-full absolute left-0 top-[100%] z-40">
+              <div className="w-full bg-white rounded-xl flex flex-col py-1 mt-1 shadow-2xl overflow-hidden">
 
-      {/* RESULTS item.source.replace("https://", "").split("/")[0] */}
-      <div className="flex flex-col gap-6 mt-6">
+                {filteredHistory?.length === 0 && (
+                  <div className="px-3 py-2 text-gray-400">Ничего не найдено</div>
+                )}
 
-        {searchResults?.map((item, idx) => {
-          return (
-            <div
-              key={idx}
-              className="bg-white rounded-2xl shadow-sm border border-gray-200 p-5"
-            >
-              <div className="flex gap-2">
-                {item.tags.map((tag, idx) => {
-                  return (
-                    <div
-                      key={idx}
-                      className="inline-block bg-gray-100 text-gray-700 text-xs px-3 py-1 rounded-full mb-3"
-                    >
-                      {tag}
-                    </div>
-                  )
-                })
-                }
+                {filteredHistory?.map((value) => (
+                  <button
+                    key={value}
+                    className="hover:bg-gray-300 px-3 text-gray-700 py-2 w-full text-left"
+                  >
+                    {value}
+                  </button>
+                ))}
               </div>
-
-
-              <h2 className="font-semibold text-[17px] leading-snug">
-                {item.title}
-              </h2>
-
-              <a
-                href="#"
-                className="text-blue-500 text-sm mt-2 inline-block break-all overflow-hidden w-[300px] text-nowrap text-ellipsis"
-              >
-                {item.source}
-              </a>
-
-              <p className="text-[14px] text-gray-700 mt-3 leading-relaxed">
-                {item.title}
-              </p>
-
-              <div className="text-gray-500 text-xs mt-4">{formatDate(item.onDateCreated)}</div>
             </div>
-          )
-        })
-        }
+          )}
+
+        </div>
+
+        <ArticleFilterSheet onSubmit={() => { }} />
+      </div>
+      {/* RESULTS item.source.replace("https://", "").split("/")[0] */}
+      <div className="flex flex-col gap-3 mt-6">
+        {!searching && <div className="font-semibold text-2xl">Для вас</div>}
+        <div className="flex flex-col gap-6">
+          {isLoading && 
+            <>
+              {Array.from({ length: 5 }).map((_, idx) => (
+                <div key={idx} className="bg-white rounded-2xl shadow-sm border border-gray-200 p-5">
+                  <div className="flex gap-2 pb-2">
+                    <Skeleton className="h-6 w-[50px]" /> <Skeleton className="h-6 w-[50px]" />
+                  </div>
+                  
+                  <h2 className="font-semibold text-[17px] leading-snug">
+                    <Skeleton className="h-6 w-[250px]" />
+                  </h2>
+
+                  <div className="text-[14px] text-gray-700 mt-3 leading-relaxed space-y-2">
+                    <Skeleton className="h-4 max-w-[600px]" />
+                    <Skeleton className="h-4 max-w-[600px]" />
+                  </div>
+
+                  <div className="text-gray-500 text-xs mt-4"><Skeleton className="h-4 w-[250px]" /></div>
+                </div>
+              ))}
+            </>
+          }
+
+          {searchResults?.articles.map((item, idx) => {
+            return (
+              <div key={idx} className="bg-white rounded-2xl shadow-sm border border-gray-200 p-5">
+                <div className="flex gap-2">
+                  {item.tags.map((tag, idx) => {
+                    return (
+                      <div
+                        key={idx}
+                        className="inline-block bg-gray-100 text-gray-700 text-xs px-3 py-1 rounded-full mb-3"
+                      >
+                        {tag}
+                      </div>
+                    )
+                  })
+                  }
+                </div>
+
+
+                <h2 className="font-semibold text-[17px] leading-snug">
+                  {item.title}
+                </h2>
+
+                <a
+                  href="#"
+                  className="text-blue-500 text-sm mt-2 inline-block break-all overflow-hidden w-[300px] text-nowrap text-ellipsis"
+                >
+                  {item.source}
+                </a>
+
+                <p className="text-[14px] text-gray-700 mt-3 leading-relaxed">
+                  {item.title}
+                </p>
+
+                <div className="text-gray-500 text-xs mt-4">{formatDate(item.onDateCreated)}</div>
+              </div>
+            )
+          })
+          }
+        </div>
       </div>
 
     </div>
