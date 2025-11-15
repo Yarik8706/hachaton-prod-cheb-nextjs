@@ -78,7 +78,8 @@ export default function HomePage() {
   const showSkeleton = searching || isLoading
 
   return (
-    <div className="w-full flex flex-col px-4 pt-6 pb-20 space-y-1 min-h-screen">
+    <div 
+      className="w-full flex flex-col px-4 pt-6 pb-20 space-y-1 min-h-screen">
 
       {!searching && <div className="text-2xl font-semibold mb-6">Новости</div>}
 
@@ -149,7 +150,9 @@ export default function HomePage() {
 
           {searchResults?.articles.map((item, idx) => {
             return (
-              <div key={idx} className="bg-white rounded-2xl shadow-sm border border-gray-200 p-5">
+              <div key={idx} 
+                   className="article-card bg-white rounded-2xl shadow-sm hover:scale-[1.02] duration-600 hover:shadow-md transition-all
+                   border border-gray-200 p-5">
                 <div className="flex gap-2">
                   {item.tags.map((tag, idx) => {
                     return (
