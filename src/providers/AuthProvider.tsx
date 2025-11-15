@@ -13,11 +13,29 @@ const AppContext = createContext({
 
 export default function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isAuth, setIsAuth] = useState(false); 
-  const {fetchProfile, profile}= useProfile();
+  const {fetchProfile, profile}= useProfile()
+  
+  const tokenUpdate = () => {
+    const token = localStorage.getItem("accessToken")
+    if (token) {
+      setIsAuth(true);
+      fetchProfile();
+    }
+  }
+  
+  const setToken = (token: string) => {
+    localStorage.setItem("accessToken", token);
+    setIsAuth(true);
+  }
+
+  const clearToken = () => {
+    localStorage.removeItem("accessToken");
+    setIsAuth(false);
+  }
 
   useEffect(() => {
     tokenUpdate()
-    
+
     // if (localStorage.getItem("accessToken") == null) return;
     // const refresh = async () => {
     //   try {
@@ -29,25 +47,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
     //   }
     // };
     // refresh().then(() => tokenUpdate());
-  }, []);
-  
-  const tokenUpdate = () => {
-    const token = localStorage.getItem("accessToken")
-    if (token) {
-      setIsAuth(true);
-      fetchProfile();
-    }
-  }
-
-  const setToken = (token: string) => {
-    localStorage.setItem("accessToken", token);
-    setIsAuth(true);
-  }
-
-  const clearToken = () => {
-    localStorage.removeItem("accessToken");
-    setIsAuth(false);
-  }
+  }, [tokenUpdate]);
 
   return <AppContext.Provider value={{isAuth, setToken, clearToken, tokenUpdate}}>{children}</AppContext.Provider>;
 }

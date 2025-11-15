@@ -3,7 +3,8 @@
 import axios from 'axios'
 
 export const api = axios.create({
-  baseURL: process.env.NODE_ENV == 'development' ? 'https://team-24-s53axywr.hack.prodcontest.ru' : '',
+  baseURL: 
+    process.env.NODE_ENV == 'development' ? 'https://team-15-hr52t5mj.hack.prodcontest.ru/' : '',
   headers: {
     'Content-Type': 'application/json',
   },
@@ -13,7 +14,7 @@ export const api = axios.create({
 api.interceptors.request.use(config => {
   const accessToken = localStorage.getItem('accessToken')
 
-  const authFreeEndpoints = ['/api/v1/auth/login', '/api/v1/auth/register']
+  const authFreeEndpoints = ['/v1/auth/login', '/v1/auth/register']
   
   if (config.url){
     config.url = config.url.replace("home/", "")

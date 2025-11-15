@@ -31,11 +31,13 @@ export function ArticleFilterSheet({ onSubmit }: IProps) {
   const [tags, setTags] = useState<string[]>([]);
   const [tagValue, setTagValue] = useState("");
 
-  const [dateSearchPeriod, setDateSearchPeriod] = useState<DateSearchPeriod>(
+  const [dateSearchPeriod, setDateSearchPeriod] 
+    = useState<DateSearchPeriod>(
     DateSearchPeriod.none,
   );
 
-  const [sourceType, setSourceType] = useState<SourceType>(SourceType.Habr);
+  const [sourceType, setSourceType] = 
+    useState<SourceType>(SourceType.All);
 
   const addTag = () => {
     const t = tagValue.trim();
@@ -82,6 +84,7 @@ export function ArticleFilterSheet({ onSubmit }: IProps) {
               value={sourceType}
               onChange={(e) => setSourceType(Number(e.target.value))}
             >
+              <option value={SourceType.All}>Все источники</option>
               <option value={SourceType.Habr}>Habr</option>
               <option value={SourceType.Devto}>Dev.to</option>
               <option value={SourceType.Medium}>Medium</option>
@@ -113,7 +116,7 @@ export function ArticleFilterSheet({ onSubmit }: IProps) {
                 onChange={(e) => setTagValue(e.target.value)}
                 placeholder="Добавить тег"
               />
-              <Button onClick={addTag}>+</Button>
+              <Button className="py-2 px-4" onClick={addTag}>+</Button>
             </div>
 
             <div className="flex flex-wrap gap-2 mt-2">

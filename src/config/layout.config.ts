@@ -7,7 +7,6 @@ export const layoutConfig = {
   navItems: [
     { href: "/home/", icon: Home, label: "Главная" },
     // { href: "/search", icon: Search, label: "Поиск" },
-    { href: "/home/cart/", icon: ShoppingCart, label: "Корзина" },
     // { href: "/checkout", icon: CreditCard, label: "Оплата" },
     { href: "/home/profile/", icon: User, label: "Профиль" },
   ],

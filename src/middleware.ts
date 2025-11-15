@@ -3,7 +3,7 @@ import {NextRequest, NextResponse} from 'next/server'
 export async function middleware(request: NextRequest) {
 	const token = request.cookies.get('token')?.value
 
-	const protectedPaths = ["/api"];
+	const protectedPaths = ["/v1"];
 
 	if (protectedPaths.some((p) => request.nextUrl.pathname.startsWith(
 		p.replace(":path", "")))) {

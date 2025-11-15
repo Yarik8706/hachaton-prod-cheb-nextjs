@@ -6,7 +6,7 @@ export interface IProfile {
 }
 
 export interface ISearchResult {
-  articles: IArticle[],
+  articles: IArticleCard[],
   summarize: string
 }
 
@@ -14,7 +14,16 @@ export interface IArticle {
   id: string;
   title: string;
   tags: string[];
-  image: string;
   onDateCreated: Date;
-  articleText: string;
+  source: string
+  text: string
+}
+
+export interface IArticleCard {
+  source: string
+  id: string;
+  title: string;
+  summary: string;
+  tags: string[];
+  onDateCreated: Date;
 }

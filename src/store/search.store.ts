@@ -1,19 +1,23 @@
 ﻿import { create } from "zustand";
 import { devtools } from "zustand/middleware";
 import { api } from "@/api/api";
-import { ISearchResult } from "@/store/types";
+import { IArticle, ISearchResult } from '@/store/types'
+import { siteConfig } from "@/config/site.config";
+
+//siteConfig.showMockData
 
 export enum SourceType {
 	Habr,
 	Devto,
-	Medium
+	Medium,
+	All,
 }
 
 export enum DateSearchPeriod {
-	none,
 	day,
 	month,
 	year,
+	none,
 }
 
 interface SearchParams {
@@ -29,10 +33,12 @@ interface SearchStore {
 
 	searchParams: SearchParams | null;
 	searchingHistory: string[];
+	searchResults: ISearchResult | null;
 
 	setSearchParams: (params: SearchParams) => void;
-	getSearchResults: () => Promise<ISearchResult | null>;
-	getSearchingHistory: () => Promise<string[] | null>;
+	getArticleById: (id: string) => Promise<IArticle | null>;
+	getSearchResults: () => null;
+	getSearchingHistory: () => null;
 }
 
 export const useArticleSearch = create<SearchStore>()(
@@ -44,35 +50,93 @@ export const useArticleSearch = create<SearchStore>()(
 		searchingHistory: [],
 
 		setSearchParams: (params: SearchParams) => {
-			set({ searchParams: params });
+			const cleaned: Record<string, any> = { ...params };
 
-			const url = new URL(window.location.href);
-			const p = url.searchParams;
+			if (params.dateSearchPeriod === DateSearchPeriod.none) {
+				delete cleaned.dateSearchPeriod;
+			}
 
-			p.set("text", params.text);
-			p.set("tags", params.tags.join(","));
-			p.set("dateSearchPeriod", params.dateSearchPeriod.toString());
-			p.set("sourceType", params.sourceType.toString());
+			if (params.sourceType === SourceType.All) {
+				delete cleaned.sourceType;
+			}
 
-			url.search = p.toString();
-			window.history.replaceState({}, "", url.toString());
+			if (!params.tags || params.tags.length === 0) {
+				delete cleaned.tags;
+			}
+			
+			if (!params.text || params.text.trim() === "") {
+				delete cleaned.text;
+			}
+			
+			set({ searchParams: cleaned as SearchParams });
+			
+			const search = new URLSearchParams(window.location.search);
+
+			Object.keys(params).forEach((key) => {
+				if (cleaned[key] === undefined || cleaned[key] === null) {
+					search.delete(key);
+				} else {
+					search.set(key, String(cleaned[key]));
+				}
+			});
+
+			const newUrl = `${window.location.pathname}?${search.toString()}`;
+			window.history.replaceState(null, "", newUrl);
 		},
+
 
 		getSearchResults: async () => {
 			const { searchParams } = get();
-			if (!searchParams) return null;
+			if (!searchParams ) return null;
 
 			try {
 				set({ isLoading: true, error: null });
+				console.log("fdsfsfdfsds")
+				// ---- MOCK ----
+				if (siteConfig.showMockData) {
+					await new Promise(res => setTimeout(res, 500));
+
+					const mock: ISearchResult = {
+						articles: [
+							{
+								id: "mock-1",
+								title: "Mock Article 1",
+								tags: ["frontend", "react"],
+								onDateCreated: new Date(),
+								source: "https://habr.com/fgdsgfdg",
+								summary: "Lorem ipsum dolor sit amet consectetur adipisicing elit. Lorem ipsum dolor sit amet consectetur adipisicing elit. Lorem ipsum dolor sit amet consectetur adipisicing elit."
+							},
+							{
+								id: "mock-2",
+								title: "Mock Article 2",
+								tags: ["backend", "nestjs"],
+								onDateCreated: new Date(),
+								source: "https://habr.com/fgdsgfdg",
+								summary: "Lorem ipsum dolor sit amet consectetur adipisicing elit. Lorem ipsum dolor sit amet consectetur adipisicing elit. Lorem ipsum dolor sit amet consectetur adipisicing elit."
+							}
+						],
+						summarize: "Моковые данные. Результаты поиска."
+					};
+
+					set({ searchResults: mock });
+					console.log(mock)
+					return 
+				}
+				
+				let tags = ""
+				searchParams.tags.forEach(tag => {
+					tags += `&tags=${tag}`
+				})
 
 				const { data } = await api.get<ISearchResult>(
 					`/api/v1/search?text=${searchParams.text}` +
+					tags +
 					`&tags=${searchParams.tags.join(",")}` +
 					`&onDateCreated=${searchParams.dateSearchPeriod}` +
 					`&sourceType=${searchParams.sourceType}`
 				);
 
-				return data;
+				set({ searchResults: data });
 			} catch (e) {
 				set({ error: "Ошибка при получении результатов поиска" });
 				return null;
@@ -81,20 +145,57 @@ export const useArticleSearch = create<SearchStore>()(
 			}
 		},
 
+
 		getSearchingHistory: async () => {
 			try {
 				set({ isLoading: true, error: null });
 
+				if (siteConfig.showMockData) {
+					await new Promise(res => setTimeout(res, 500));
+
+					const mockHistory = ["react", "zustand", "api", "frontend"];
+					set({ searchingHistory: mockHistory });
+					return mockHistory;
+				}
+
 				const { data } = await api.get<string[]>(`/api/v1/search/history`);
 				set({ searchingHistory: data });
-
-				return data;
 			} catch (e) {
 				set({ error: "Ошибка при загрузке истории поиска" });
+			} finally {
+				set({ isLoading: false });
+			}
+		},
+		getArticleById: async (id: string) => {
+			try {
+				set({ isLoading: true, error: null });
+
+				// ---- MOCK ----
+				if (siteConfig.showMockData) {
+					await new Promise(res => setTimeout(res, 500));
+
+					const mock: IArticle = {
+						id: "mock-1",
+						title: "Mock Article 1",
+						tags: ["frontend", "react"],
+						onDateCreated: new Date(),
+						source: "https://habr.com/fgdsgfdg",
+						text: "Mock Article 1"
+					};
+
+					return mock;
+				}
+				// ---------------
+
+				const { data } = await api.get<IArticle>(`/api/v1/articles/${id}`);
+				return data;
+			} catch (e) {
+				set({ error: "Ошибка при получении статьи" });
 				return null;
 			} finally {
 				set({ isLoading: false });
 			}
-		}
+		},
+
 	}))
 );

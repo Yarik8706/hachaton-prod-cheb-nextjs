@@ -2,37 +2,49 @@
 
 import { Button } from '@/components/ui/button'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useEffect } from 'react'
-import { CLIENT_ID, HOME_URL, YANDEX_AUTH_URL } from '@/consts/consts'
+import { useEffect, useRef } from 'react'
+import { HOME_URL } from '@/consts/consts'
 import { api } from '@/api/api'
 
 export default function YandexButton() {
 	const { replace, push } = useRouter()
+	const yandexRef = useRef("")
 
 	const params = useSearchParams()
 
 	useEffect(() => {
+
+		api.get(`v1/auth/yandex/auth-url`).then(res => {
+			yandexRef.current = res.data
+			console.log(res)
+		}).catch(err => console.error('Ошибка получения URL:', err))
+
+	}, [])
+
+	useEffect(() => {
 		const code = params.get('code')
 
-		if (code) {
-			api
-				.post(`/auth/oauth/authorize?code=${encodeURIComponent(code)}`)
-				.then(res => {
-					localStorage.setItem('access_token', res.data.access_token)
-					push(HOME_URL)
-				})
-				.catch(err => console.error('Ошибка авторизации:', err))
-		}
+		// if (code) {
+		// 	api
+		// 		.post(`v1/auth/yandex/authorize?code=${encodeURIComponent(code)}`)
+		// 		.then(res => {
+		// 			localStorage.setItem('access_token', res.data.access_token)
+		// 			push(HOME_URL)
+		// 		})
+		// 		.catch(err => console.error('Ошибка авторизации:', err))
+		// }
 	}, [params, push])
 
 	const handleLogin = () => {
-		const authUrl = `${YANDEX_AUTH_URL}?response_type=code&client_id=${CLIENT_ID}`
+		const authUrl = yandexRef.current
+		console.log("dfsfdsafsafd " + authUrl)
 		replace(authUrl)
 	}
 
   return (
 		<Button
-			className='mt-6 flex w-full items-center justify-between gap-4 rounded-lg bg-black hover:bg-[#555555] dark:bg-white dark:hover:bg-[#EEE]'
+			className='flex w-full items-center justify-between h-[44px]
+			gap-4 bg-black/80 hover:bg-[#555555] dark:bg-white dark:hover:bg-[#EEE]'
 			onClick={handleLogin}
 		>
 			<svg

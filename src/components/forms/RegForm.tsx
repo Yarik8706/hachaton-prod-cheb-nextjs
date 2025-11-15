@@ -1,6 +1,6 @@
 ﻿'use client'
 
-import { Button } from '@/components/ui/button'
+import { useState } from 'react'
 import {
 	Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle,
 } from '@/components/ui/card'
@@ -20,43 +20,55 @@ import { z } from 'zod'
 import { siteConfig } from "@/config/site.config"
 import { useAuth } from "@/providers/AuthProvider"
 import SetInterests from '@/components/forms/SetInterests'
-import { useState } from 'react'
+import YandexButton from '@/components/utils/YandexButton'
 
 const formSchema = z.object({
 	email: z.string().email("Укажите корректный email"),
 	password: z.string().min(6, "Пароль должен быть не менее 6 символов"),
+	interests: z.array(z.string()).min(1, "Добавьте хотя бы один интерес"),
 })
 
 export default function RegForm() {
 	const { push } = useRouter()
 	const { setToken, tokenUpdate } = useAuth()
 
-	const [interests, setInterests] = useState<string[]>([]);
-	const [value, setValue] = useState("");
+	const [interests, setInterestsState] = useState<string[]>([])
+	const [value, setValue] = useState("")
+	const [interestsValidate, setInterestsValidate] = useState(false)
+	
+	const setInterests = (items: string[], validate = false) => {
+		setInterestsState(items)
+	}
 
 	const addInterest = () => {
-		const v = value.trim();
-		if (!v) return;
-		setInterests(prev => [...prev, v]);
-		setValue("");
-	};
+		const v = value.trim()
+		if (!v) return
 
-	const removeInterest = (i: number) =>
-		setInterests(prev => prev.filter((_, idx) => idx !== i));
+		const updated = [...interests, v]
+		setInterests(updated, true)             // <-- validate = true
+		setValue("")
+	}
+
+	const removeInterest = (i: number) => {
+		const updated = interests.filter((_, idx) => idx !== i)
+		setInterests(updated, true)           
+		if (updated.length === 0) setInterestsValidate(true)
+	}
 
 	const form = useForm<z.infer<typeof formSchema>>({
 		resolver: zodResolver(formSchema),
-		defaultValues: { email: '', password: '' },
+		defaultValues: { email: '', password: '', interests: [] },
 		mode: 'onChange',
 	})
 
 	const { mutateAsync: registerFn } = useMutation({
 		mutationFn: async (data: z.infer<typeof formSchema>) =>
-			await api.post('/api/v1/auth/register', {
+			await api.post('/v1/auth/register', {
 				email: data.email,
 				password: data.password,
-				interests: interests,
+				interests: interests, // TODO backend
 			}),
+
 		onSuccess: () => {
 			toast("Успешная регистрация")
 			push('/home')
@@ -65,6 +77,7 @@ export default function RegForm() {
 	})
 
 	async function onSubmit(data: z.infer<typeof formSchema>) {
+		if (interests.length === 0) setInterestsValidate(true)
 		await registerFn(data)
 			.then(response => {
 				const accessToken = response.headers["authorization"]?.split(" ")[1];
@@ -81,9 +94,10 @@ export default function RegForm() {
 	return (
 		<div className="px-2 w-full md:w-auto">
 			<Card className='w-auto md:w-[475px]'>
+
 				<CardHeader>
 					<CardDescription className='mb-2 text-sm'>
-						<Link href='/home' className='flex items-center gap-1'>
+						<Link href='/' className='flex items-center gap-1'>
 							<ArrowLeft className='stroke-black dark:stroke-white' width={16} height={16}/>
 							<p>Назад</p>
 						</Link>
@@ -128,14 +142,20 @@ export default function RegForm() {
 									)}
 								/>
 
-								<div className="text-sm text-gray-600 py-2">Укажите ваши интересы, например (Python, бэкенд, дизайн т.д.):</div>
-								<SetInterests
-									value={value}
-									setValue={setValue}
-									interests={interests}
-									addInterest={addInterest}
-									removeInterest={removeInterest}
-								/>
+								<div>
+									<div className="text-sm text-gray-700 mb-2">
+										Укажите ваши интересы (Python, бэкенд, дизайн и т.д.)
+									</div>
+
+									<SetInterests
+										value={value}
+										setValue={setValue}
+										interests={interests}
+										addInterest={addInterest}
+										removeInterest={removeInterest}
+										validate={interestsValidate}
+									/>
+								</div>
 
 							</div>
 						</form>
@@ -143,9 +163,18 @@ export default function RegForm() {
 				</CardContent>
 
 				<CardFooter className='flex flex-col gap-2'>
-					<Button type='submit' form='reg-form' className='w-full'>
+					<button type='submit'
+									form='reg-form'
+
+									className='w-full bg-[var(--main-color)] hover:bg-yellow-500 transition text-black px-5 py-3 rounded-xl text-sm font-medium'>
 						Зарегистрироваться
-					</Button>
+					</button>
+					<div className="flex w-full justify-center items-center gap-2">
+						<div className={'w-[40%] h-[1px] bg-gray-300'}></div>
+						<div className="mx-4 mt-[-4px]">или</div>
+						<div className={'w-[40%] h-[1px] bg-gray-300'}></div>
+					</div>
+					<YandexButton />
 				</CardFooter>
 
 			</Card>
