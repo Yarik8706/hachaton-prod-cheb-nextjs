@@ -1,9 +1,14 @@
 ﻿"use client";
 
-import { Filter, Search } from 'lucide-react'
-import { useEffect, useState, useRef } from 'react'
+import { Search } from 'lucide-react'
+import { useEffect, useState, useRef, useMemo } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { convertURLParamsToRecord, SearchParams, useArticleSearch } from '@/store/search.store'
+import {
+  SearchParams,
+  useArticleSearch,
+  DateSearchPeriod,
+  SourceType,
+} from '@/store/search.store'
 import { formatDate } from '@/components/utils/format-date'
 import { ArticleFilterSheet } from '@/components/sheets/ArticleFilterSheet'
 import { Skeleton } from '@/components/ui/skeleton';
@@ -14,10 +19,20 @@ export default function HomePage() {
   const [searching, setSearching] = useState(false)
   const [searchText, setSearchText] = useState("")
   const params = useSearchParams()
+  const searchParamsString = params.toString()
   const [showHistory, setShowHistory] = useState(false)
   const [loadNextArticles, setLoadNextArticles] = useState(false)
-  const [isParamsEmpty, setIsParamsEmpty] = useState(false)
-  
+  const queryEntries = useMemo(() => {
+    const query = new URLSearchParams(searchParamsString)
+    return Array.from(query.entries())
+  }, [searchParamsString])
+
+  const isParamsEmpty = useMemo(() => {
+    if (queryEntries.length === 0) return true
+
+    return queryEntries.every(([, value]) => value.trim() === '')
+  }, [queryEntries])
+
   const {
     searchResults,
     setSearchParams,
@@ -31,6 +46,12 @@ export default function HomePage() {
 
   const searchRef = useRef<HTMLDivElement | null>(null)
 
+  const hasActiveFilters = useMemo(() => {
+    return queryEntries.some(([key, value]) =>
+      key !== 'text' && value.trim() !== ''
+    )
+  }, [queryEntries])
+
   // первая загрузка
   useEffect(() => {
     getSearchingHistory()
@@ -42,7 +63,7 @@ export default function HomePage() {
     getSearchResults()
     setLoadNextArticles(false)
     setSearchText(params.get("text") || "")
-    
+
   }, [params])
 
   // клик вне поиска
@@ -77,6 +98,21 @@ export default function HomePage() {
     setSearchText(text)
     setSearching(text !== '')
     setShowHistory(text !== '')
+  }
+
+  const handleFiltersSubmit = () => {
+    setLoadNextArticles(false)
+    getSearchResults()
+  }
+
+  const handleClearFilters = () => {
+    setSearchParams({
+      text: searchText,
+      tags: [],
+      dateSearchPeriod: DateSearchPeriod.none,
+      sourceType: SourceType.All,
+    } as SearchParams)
+    handleFiltersSubmit()
   }
 
   // debounce поиска
@@ -146,7 +182,22 @@ export default function HomePage() {
 
         </div>
 
-        <ArticleFilterSheet onSubmit={() => { }} />
+        <div className="flex items-center gap-2">
+          <ArticleFilterSheet
+            key={searchParamsString}
+            currentText={searchText}
+            onSubmit={handleFiltersSubmit}
+          />
+          {hasActiveFilters && (
+            <button
+              type="button"
+              onClick={handleClearFilters}
+              className="text-sm font-medium text-gray-700 hover:text-gray-900"
+            >
+              Очистить фильтры
+            </button>
+          )}
+        </div>
       </div>
 
       {/* RESULTS */}

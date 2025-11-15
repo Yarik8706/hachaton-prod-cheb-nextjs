@@ -15,29 +15,40 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 
-import { Filter, SortDesc } from 'lucide-react'
+import { Filter } from 'lucide-react'
 import { useArticleSearch } from "@/store/search.store";
 
 import { SourceType, DateSearchPeriod } from "@/store/search.store";
 import TagHandler from '@/components/common/TagHandler'
+import { useSearchParams } from 'next/navigation'
 
 interface IProps {
   onSubmit: () => void;
+  currentText: string;
 }
 
-export function ArticleFilterSheet({ onSubmit }: IProps) {
+export function ArticleFilterSheet({ onSubmit, currentText }: IProps) {
   const { setSearchParams } = useArticleSearch();
+  const searchParams = useSearchParams();
 
-  const [tags, setTags] = useState<string[]>([]);
+  const [tags, setTags] = useState<string[]>(() => {
+    const urlTags = searchParams.get('tags');
+    return urlTags ? urlTags.split(',').filter(Boolean) : [];
+  });
   const [tagValue, setTagValue] = useState("");
-
-  const [dateSearchPeriod, setDateSearchPeriod] 
+  const [dateSearchPeriod, setDateSearchPeriod]
     = useState<DateSearchPeriod>(
-    DateSearchPeriod.none,
+    () => {
+      const urlDate = searchParams.get('dateSearchPeriod');
+      return urlDate ? Number(urlDate) : DateSearchPeriod.none;
+    },
   );
 
-  const [sourceType, setSourceType] = 
-    useState<SourceType>(SourceType.All);
+  const [sourceType, setSourceType] =
+    useState<SourceType>(() => {
+      const urlSource = searchParams.get('sourceType');
+      return urlSource ? Number(urlSource) : SourceType.All;
+    });
 
   const addTag = () => {
     const t = tagValue.trim();
@@ -51,10 +62,26 @@ export function ArticleFilterSheet({ onSubmit }: IProps) {
 
   const handleApply = () => {
     setSearchParams({
-      text: "",
+      text: currentText,
       tags,
       dateSearchPeriod,
       sourceType,
+    });
+
+    onSubmit();
+  };
+
+  const handleClearFilters = () => {
+    setTags([]);
+    setTagValue("");
+    setDateSearchPeriod(DateSearchPeriod.none);
+    setSourceType(SourceType.All);
+
+    setSearchParams({
+      text: currentText,
+      tags: [],
+      dateSearchPeriod: DateSearchPeriod.none,
+      sourceType: SourceType.All,
     });
 
     onSubmit();
@@ -127,10 +154,15 @@ export function ArticleFilterSheet({ onSubmit }: IProps) {
           </div>
         </div>
 
-        <SheetFooter className="mt-6">
+        <SheetFooter className="mt-6 flex flex-col gap-3">
           <SheetClose asChild>
             <Button onClick={handleApply} className="w-full">
               Применить
+            </Button>
+          </SheetClose>
+          <SheetClose asChild>
+            <Button variant="outline" onClick={handleClearFilters} className="w-full">
+              Очистить фильтры
             </Button>
           </SheetClose>
         </SheetFooter>
