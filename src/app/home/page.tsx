@@ -66,6 +66,26 @@ export default function HomePage() {
     getSearchResults()
   }, [])
 
+  // Выполнить один раз при первой загрузке
+  useEffect(() => {
+    if (isParamsEmpty) return;
+
+    const initialParams: any = {};
+
+    queryEntries.forEach(([key, value]) => {
+      if (value.trim() !== "") {
+        initialParams[key] = value;
+      }
+    });
+
+    // Если в URL есть search_text → синхронизируем инпут
+    if (initialParams.search_text && initialParams.search_text !== searchText) {
+      setSearchText(initialParams.search_text);
+    }
+
+    setSearchParams(initialParams as SearchParams);
+  }, []); 
+
   // при изменении query
   useEffect(() => {
     getSearchResults()

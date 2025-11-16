@@ -5,17 +5,19 @@ import { useRouter } from 'next/navigation'
 import { useEffect, useRef } from 'react'
 import { api } from '@/api/api'
 
+export const YANDEX_AUTH_URL = 'https://oauth.yandex.ru/authorize'
+export const CLIENT_ID = 'fcfaee3d9c2c4a18b2949fc8251b380c'
+
 export default function YandexButton() {
 	const { replace } = useRouter()
 	const yandexRef = useRef("")
+	
 	useEffect(() => {
-		api.get(`v1/auth/yandex/auth-url`).then(res => {
-			yandexRef.current = res.data
-		}).catch(err => console.error('Ошибка получения URL:', err))
+		
 	}, [])
 
 	const handleLogin = () => {
-		const authUrl = yandexRef.current
+		const authUrl = `${YANDEX_AUTH_URL}?response_type=code&client_id=${CLIENT_ID}`
 		replace(authUrl)
 	}
 

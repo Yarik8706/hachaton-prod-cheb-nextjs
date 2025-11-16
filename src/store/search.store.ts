@@ -20,10 +20,10 @@ export enum DateSearchPeriod {
 }
 
 export interface SearchParams {
-        search_text: string;
-        tags: string[];
-        date: DateSearchPeriod;
-        sourceType: SourceType;
+        search_text: string | undefined;
+        tags: string[] | undefined;
+        date: DateSearchPeriod | undefined;
+        sourceType: SourceType | undefined;
 }
 
 interface SearchStore {
@@ -219,7 +219,7 @@ export const useArticleSearch = create<SearchStore>()(
 				}
 
 				// → limit = 50 всегда
-				const params = buildSearchQueryParams(searchParams, offset, 50);
+				const params = buildSearchQueryParams(searchParams, offset*5, 50);
 
 				const { data } = await api.get<IArticleCard[]>(
 					`/v1/articles/search`,
