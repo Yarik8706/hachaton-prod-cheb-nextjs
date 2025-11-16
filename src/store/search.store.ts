@@ -65,12 +65,24 @@ export const useArticleSearch = create<SearchStore>()(
 		},
 
 		setSearchParams: (params: SearchParams) => {
-			const cleaned = convertURLParamsToRecord(params);
+			const cleaned = {
+				...params,
+				...convertURLParamsToRecord(params)
+			};
 			const search = new URLSearchParams(window.location.search);
 
-			if (cleaned.search_text) {
+
+			search.delete("search_text");
+			search.delete("date");
+			search.delete("source");
+			search.delete("tags");
+			
+			if (cleaned.search_text !== undefined) {
+				console.log("clear text")
 				search.delete("search_text");
 				search.set("search_text", cleaned.search_text);
+			} else {
+				search.delete("search_text");
 			}
 
 			if (cleaned.date) {

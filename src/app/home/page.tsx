@@ -17,6 +17,7 @@ import { useRouter } from 'next/navigation'
 import { useGSAP } from '@gsap/react'
 import { gsap} from "@/utils/gsap"
 import { loadHistory, saveQuery } from '@/utils/utils'
+import { clearTimeout } from 'node:timers'
 
 export default function HomePage() {
   
@@ -48,8 +49,7 @@ export default function HomePage() {
     getSearchingHistory,
     setSearchingHistory,
     getSearchResults,
-    searchParams,
-    loadMore                // ← ДОБАВЛЕНО
+    loadMore               
   } = useArticleSearch()
 
   const searchRef = useRef<HTMLDivElement | null>(null)
@@ -70,7 +70,8 @@ export default function HomePage() {
   useEffect(() => {
     getSearchResults()
     setLoadNextArticles(false)
-    setSearchText(params.get("search_text") || "")
+    const textParams = params.get("search_text") || ""
+    if (searchText != textParams) setSearchText(textParams)
   }, [params])
   
   useGSAP(() => {
@@ -113,7 +114,7 @@ export default function HomePage() {
       const fullHeight = document.body.offsetHeight;
 
       if (fullHeight - scrollPosition < 250 && !isLoading && searchResults != undefined
-        && searchResults?.articles.length > 10) {
+        && searchResults?.articles.length >= 10) {
         setLoadNextArticles(true)
         loadMore();
       }
@@ -147,7 +148,7 @@ export default function HomePage() {
 
   const handleClearFilters = () => {
     setSearchParams({
-      search_text: searchText,
+      search_text: "",
       tags: [],
       date: DateSearchPeriod.none,
       sourceType: SourceType.All,
@@ -155,16 +156,27 @@ export default function HomePage() {
     handleFiltersSubmit()
   }
 
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      console.log("debounce")
-      setSearchParams({ search_text: searchText } as SearchParams)
-      getSearchResults()
-      setSearching(false)
-    }, 500)
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-    return () => clearTimeout(handler)
-  }, [searchText])
+  useEffect(() => {
+    if (timeoutRef.current !== null) {
+      window.clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+    
+    if (searchText.trim() === "") {
+      setSearchParams({ search_text: "" } as SearchParams);
+      return;
+    }
+    
+    timeoutRef.current = setTimeout(() => {
+      setSearchParams({ search_text: searchText } as SearchParams);
+      getSearchResults();
+      setSearching(false);
+    }, 500);
+
+  }, [searchText]);
+
 
   const onHistoryClick = (value: string) => {
     setSearchText(value)
@@ -179,10 +191,10 @@ export default function HomePage() {
   )
 
   const showSkeleton = (searching || isLoading) && !loadNextArticles
-  console.log("show skeleton: " + showSkeleton)
-  console.log("searching: " + searching)
-  console.log("isLoading: " + isLoading)
-  console.log("loadNextArticles: " + loadNextArticles)
+  // console.log("show skeleton: " + showSkeleton)
+  // console.log("searching: " + searching)
+  // console.log("isLoading: " + isLoading)
+  // console.log("loadNextArticles: " + loadNextArticles)
 
   return (
     <div className="w-full flex flex-col px-4 pt-6 pb-20 space-y-1 min-h-screen">
