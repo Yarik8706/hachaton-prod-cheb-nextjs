@@ -31,6 +31,8 @@ export default function HomePage() {
     const query = new URLSearchParams(searchParamsString)
     return Array.from(query.entries())
   }, [searchParamsString])
+  
+  const isAnimStarted = useRef(false)
 
   const isParamsEmpty = useMemo(() => {
     if (queryEntries.length === 0) return true
@@ -74,7 +76,8 @@ export default function HomePage() {
   useGSAP(() => {
     if (searchResults == undefined ||
       searchResults?.articles.length <= 0 || searchResults?.articles.length > 10) return
-    
+    if(isAnimStarted.current) return
+    isAnimStarted.current = true
     gsap.fromTo(".article-card > *", {
       opacity: 0,
       y: 20,
@@ -84,7 +87,10 @@ export default function HomePage() {
       opacity: 1,
       y: 0,
       stagger: 0.1,
-      duration: 0.5
+      duration: 0.5,
+      onComplete: () => {
+        isAnimStarted.current = false
+      }
     })
     
   }, [searchResults])

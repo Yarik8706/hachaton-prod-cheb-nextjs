@@ -4,7 +4,7 @@ import axios from 'axios'
 
 export const api = axios.create({
   baseURL: 
-    process.env.NODE_ENV == 'development' ? 'https://team-15-hr52t5mj.hack.prodcontest.ru/' : '',
+    process.env.NODE_ENV == 'development' ? 'https://8000:8000/' : '',
   headers: {
     'Content-Type': 'application/json',
   },
