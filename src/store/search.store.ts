@@ -23,7 +23,7 @@ export interface SearchParams {
         search_text: string | undefined;
         tags: string[] | undefined;
         date: DateSearchPeriod | undefined;
-        sourceType: SourceType | undefined;
+        sourceType: string | undefined;
 }
 
 interface SearchStore {
@@ -72,6 +72,7 @@ export const useArticleSearch = create<SearchStore>()(
 			const search = new URLSearchParams(window.location.search);
 
 
+			console.log(params)
 			search.delete("search_text");
 			search.delete("date");
 			search.delete("source");
@@ -90,9 +91,9 @@ export const useArticleSearch = create<SearchStore>()(
 				search.set("date", cleaned.date);
 			}
 
-			if (cleaned.source) {
+			if (cleaned.sourceType) {
 				search.delete("source");
-				search.set("source", cleaned.source);
+				search.set("source", cleaned.sourceType);
 			}
 
 			if (cleaned.tags) search.delete("tags");

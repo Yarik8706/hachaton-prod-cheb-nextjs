@@ -45,9 +45,9 @@ export function ArticleFilterSheet({ onSubmit, currentText }: IProps) {
   );
 
   const [sourceType, setSourceType] =
-    useState<SourceType>(() => {
+    useState<string>(() => {
       const urlSource = searchParams.get('sourceType');
-      return urlSource ? Number(urlSource) : SourceType.All;
+      return urlSource ? String(urlSource) : "";
     });
 
   const addTag = () => {
@@ -75,13 +75,13 @@ export function ArticleFilterSheet({ onSubmit, currentText }: IProps) {
     setTags([]);
     setTagValue("");
     setDateSearchPeriod(DateSearchPeriod.none);
-    setSourceType(SourceType.All);
+    setSourceType("");
 
     setSearchParams({
       search_text: currentText,
       tags: [],
       date: DateSearchPeriod.none,
-      sourceType: SourceType.All,
+      sourceType: "",
     });
 
     onSubmit();
@@ -109,12 +109,12 @@ export function ArticleFilterSheet({ onSubmit, currentText }: IProps) {
             <select
               className="w-full border rounded-md p-2"
               value={sourceType}
-              onChange={(e) => setSourceType(Number(e.target.value))}
+              onChange={(e) => setSourceType(e.target.value)}
             >
-              <option value={SourceType.All}>Все источники</option>
-              <option value={SourceType.Habr}>Habr</option>
-              <option value={SourceType.Devto}>Dev.to</option>
-              <option value={SourceType.Medium}>Medium</option>
+              <option value={""}>Все источники</option>
+              <option value={"blog.cloudflare.com"}>Cloudflare blog</option>
+              <option value={"dev.to"}>Dev.to</option>
+              <option value={"vercel.com"}>Vercel</option>
             </select>
           </div>
 
