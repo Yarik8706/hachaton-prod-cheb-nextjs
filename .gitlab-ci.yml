@@ -3,125 +3,102 @@ stages:
   - publish
   - deploy
 
-# Общие переменные
 variables:
-  DOCKER_TLS_CERTDIR: ""
-  BUILDX_BUILDER: frontend-builder
+  IMAGE: "$CI_REGISTRY_IMAGE:latest"
+  DOCKER_CONFIG: /kaniko/.docker/
+  KANIKO_IMAGE: gcr.io/kaniko-project/executor:debug
 
-##############################
-# BUILD — сборка через buildx
-##############################
+# ---------- BUILD ----------
 dev-build:
   stage: build
-  image: docker:24
-  services:
-    - name: docker:24-dind
-      command: ["--tls=false"]
+  image:
+    name: $KANIKO_IMAGE
+    entrypoint: [""]
   script:
-    - echo "$CI_REGISTRY_PASSWORD" | docker login "$CI_REGISTRY" \
-      -u "$CI_REGISTRY_USER" --password-stdin
+    - mkdir -p $DOCKER_CONFIG
+    - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$DEV_DOCKER_USERNAME\",\"password\":\"$DEV_DOCKER_PASSWORD\"}}}" \
+      > $DOCKER_CONFIG/config.json
 
-    - docker buildx create --name $BUILDX_BUILDER --use
-    - docker buildx inspect --bootstrap
-
-    - docker buildx build \
-      --cache-from type=registry,ref=$CI_REGISTRY_IMAGE:cache \
-      --cache-to type=registry,ref=$CI_REGISTRY_IMAGE:cache,mode=max \
-      --tag $CI_REGISTRY_IMAGE:latest \
-      --push \
-      .
+    - |
+      /kaniko/executor \
+        --context $CI_PROJECT_DIR \
+        --dockerfile $CI_PROJECT_DIR/Dockerfile \
+        --destination "$CI_REGISTRY_IMAGE:latest" \
+        --cache=true \
+        --cache-repo="$CI_REGISTRY_IMAGE/cache" \
+        --verbosity=info
 
   rules:
-    - if: '$CI_COMMIT_BRANCH == "master"'
+    - if: $CI_COMMIT_BRANCH == "master"
 
-
-##############################
-# PUBLISH — публикация сборки
-##############################
+# ---------- PUBLISH ----------
 dev-publish:
   stage: publish
-  image: docker:24
-  services:
-    - name: docker:24-dind
-      command: ["--tls=false"]
+  image:
+    name: $KANIKO_IMAGE
+    entrypoint: [""]
   script:
-    - echo "$CI_REGISTRY_PASSWORD" | docker login "$CI_REGISTRY" \
-      -u "$CI_REGISTRY_USER" --password-stdin
+    - mkdir -p $DOCKER_CONFIG
+    - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" \
+      > $DOCKER_CONFIG/config.json
 
-    - docker buildx create --name $BUILDX_BUILDER --use || docker buildx use $BUILDX_BUILDER
-    - docker buildx inspect --bootstrap
-
-    - docker buildx build \
-      --cache-from type=registry,ref=$CI_REGISTRY_IMAGE:cache \
-      --cache-to type=registry,ref=$CI_REGISTRY_IMAGE:cache,mode=max \
-      --tag $CI_REGISTRY_IMAGE:latest \
-      --tag "$CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA" \
-      --push \
-      .
+    - |
+      /kaniko/executor \
+        --context $CI_PROJECT_DIR \
+        --dockerfile $CI_PROJECT_DIR/Dockerfile \
+        --destination "$CI_REGISTRY_IMAGE:latest" \
+        --destination "$CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA" \
+        --cache=true \
+        --cache-repo="$CI_REGISTRY_IMAGE/cache" \
+        --verbosity=info
 
   rules:
-    - if: '$CI_COMMIT_BRANCH == "master"'
+    - if: $CI_COMMIT_BRANCH == "master"
 
-
-##############################
-# DEPLOY — развёртывание кода
-##############################
 dev-deploy-frontend:
   stage: deploy
-  image: alpine:3.20
 
   before_script:
     - apk add --no-cache openssh
     - mkdir -p ~/.ssh
 
-    # SSH ключ
+    # SSH key
     - echo "$ENV_PRIVATE_KEY_BASE64" | base64 -d > ~/.ssh/id_rsa
     - chmod 600 ~/.ssh/id_rsa
 
-    # Проверка необходимых переменных
-    - echo "SSH HOST = $ENV_SSH_HOST"
-    - echo "SSH USER = $ENV_SSH_USER"
-    - echo "Registry = $CI_REGISTRY"
-    - echo "Image = $CI_REGISTRY_IMAGE:latest"
-
-    # Добавить сервер в known_hosts
+    # Добавление сервера в known_hosts
     - ssh-keyscan -p 22 "$ENV_SSH_HOST" >> ~/.ssh/known_hosts
 
   script:
-    ###########################################
-    # 1. Команды на сервере
-    ###########################################
     - |
       ssh -o StrictHostKeyChecking=no "$ENV_SSH_USER@$ENV_SSH_HOST" "
-        echo '=== Docker Login ==='
-        echo '$CI_REGISTRY_PASSWORD' | docker login '$CI_REGISTRY' \
-          -u '$CI_REGISTRY_USER' --password-stdin
+        echo 'Logging into registry...';
+        echo '$CI_REGISTRY_PASSWORD' | docker login '$CI_REGISTRY' -u '$CI_REGISTRY_USER' --password-stdin;
 
-        echo '=== Docker Pull ==='
-        docker pull $CI_REGISTRY_IMAGE:latest
+        echo 'Pulling frontend image...';
+        docker pull $CI_REGISTRY_IMAGE:latest;
 
-        echo '=== Restart frontend container ==='
-        docker stop frontend || true
-        docker rm frontend || true
+        echo 'Stopping old frontend container...';
+        docker stop frontend || true;
+        docker rm frontend || true;
 
+        echo 'Starting new frontend container...';
         docker run -d \
           --name frontend \
           --restart unless-stopped \
           -p 3000:3000 \
-          $CI_REGISTRY_IMAGE:latest
+          $CI_REGISTRY_IMAGE:latest;
       "
 
-    ###########################################
-    # 2. Проверка успешного запуска
-    ###########################################
     - |
+      # Проверка запуска
       ssh -o StrictHostKeyChecking=no "$ENV_SSH_USER@$ENV_SSH_HOST" "
         sleep 5
-        if docker ps | grep -q frontend; then
-          echo 'Frontend started successfully'
+        if docker ps | grep -q 'frontend'; then
+          echo 'Frontend started successfully';
           docker logs frontend --tail 50
         else
-          echo 'Frontend FAILED TO START'
+          echo 'Frontend failed to start';
           docker logs frontend --tail 50 || true
           exit 1
         fi
@@ -129,4 +106,3 @@ dev-deploy-frontend:
 
   rules:
     - if: '$CI_COMMIT_BRANCH == "master"'
-
