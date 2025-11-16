@@ -35,7 +35,7 @@ export default function SetInterests({
 						value={value}
 						onChange={(e) => setValue(e.target.value)}
 					/>
-					<Button onClick={addInterest} className="py-2">Добавить</Button>
+					<Button type="button" onClick={addInterest} className="py-2">Добавить</Button>
 				</div>
 
 				<div className="flex flex-wrap gap-2">

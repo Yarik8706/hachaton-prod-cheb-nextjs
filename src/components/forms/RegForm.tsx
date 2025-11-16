@@ -72,17 +72,14 @@ export default function RegForm() {
 			toast("Успешная регистрация")
 			push('/home')
 		},
-		onError: () => toast("Ошибка регистрации")
+		onError: () => toast("Email уже зарегистрирован")
 	})
 
 	async function onSubmit(data: z.infer<typeof formSchema>) {
 		if (interests.length === 0) setInterestsValidate(true)
 		await registerFn(data)
 			.then(response => {
-				console.log("response")
-				console.log(response)
 				const accessToken = response.data.access;
-				console.log(accessToken)
 				if (accessToken) {
 					setToken(accessToken);
 					tokenUpdate();

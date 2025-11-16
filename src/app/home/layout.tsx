@@ -12,11 +12,10 @@ interface IProps {
 }
 
 const Layout: React.FC<IProps> = ({ children }: IProps) => {
-  const {isAuth} = useAuth()
   const router = useRouter()
 
   useEffect(() => {
-    if (!isAuth) {
+    if (!localStorage.getItem("accessToken")) {
       router.push('/login')
     }
   }, [])

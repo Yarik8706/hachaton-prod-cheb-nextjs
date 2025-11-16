@@ -68,8 +68,7 @@ export default function HomePage() {
   useEffect(() => {
     getSearchResults()
     setLoadNextArticles(false)
-    setSearchText(params.get("text") || "")
-
+    setSearchText(params.get("search_text") || "")
   }, [params])
   
   useGSAP(() => {
@@ -142,7 +141,7 @@ export default function HomePage() {
 
   const handleClearFilters = () => {
     setSearchParams({
-      text: searchText,
+      search_text: searchText,
       tags: [],
       date: DateSearchPeriod.none,
       sourceType: SourceType.All,
@@ -153,7 +152,7 @@ export default function HomePage() {
   useEffect(() => {
     const handler = setTimeout(() => {
       console.log("debounce")
-      setSearchParams({ text: searchText } as SearchParams)
+      setSearchParams({ search_text: searchText } as SearchParams)
       getSearchResults()
       setSearching(false)
     }, 500)
@@ -163,7 +162,7 @@ export default function HomePage() {
 
   const onHistoryClick = (value: string) => {
     setSearchText(value)
-    setSearchParams({ text: value } as SearchParams)
+    setSearchParams({ search_text: value } as SearchParams)
     setShowHistory(false)
     setSearching(true)
   }

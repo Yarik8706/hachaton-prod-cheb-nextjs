@@ -20,7 +20,7 @@ export enum DateSearchPeriod {
 }
 
 export interface SearchParams {
-        text: string;
+        search_text: string;
         tags: string[];
         date: DateSearchPeriod;
         sourceType: SourceType;
@@ -64,37 +64,36 @@ export const useArticleSearch = create<SearchStore>()(
 			set({ searchingHistory: history });
 		},
 
-                setSearchParams: (params: SearchParams) => {
-                        const cleaned = convertURLParamsToRecord(params);
-                        const search = new URLSearchParams(window.location.search);
+		setSearchParams: (params: SearchParams) => {
+			const cleaned = convertURLParamsToRecord(params);
+			const search = new URLSearchParams(window.location.search);
 
-                        search.delete("search_text");
-                        search.delete("date");
-                        search.delete("source");
-                        search.delete("tags");
+			if (cleaned.search_text) {
+				search.delete("search_text");
+				search.set("search_text", cleaned.search_text);
+			}
 
-                        if (cleaned.search_text) {
-                                search.set("search_text", cleaned.search_text);
-                        }
+			if (cleaned.date) {
+				search.delete("date");
+				search.set("date", cleaned.date);
+			}
 
-                        if (cleaned.date) {
-                                search.set("date", cleaned.date);
-                        }
+			if (cleaned.source) {
+				search.delete("source");
+				search.set("source", cleaned.source);
+			}
 
-                        if (cleaned.source) {
-                                search.set("source", cleaned.source);
-                        }
+			if (cleaned.tags) search.delete("tags");
 
-                        cleaned.tags?.forEach(tag => search.append("tags", tag));
+			cleaned.tags?.forEach(tag => search.append("tags", tag));
 
-                        const newUrl = `${window.location.pathname}?${search.toString()}`;
+			const newUrl = `${window.location.pathname}?${search.toString()}`;
 
-                        window.history.replaceState(null, "", newUrl);
-
-                        set({
-                                searchParams: params
-                        })
-                },
+			window.history.replaceState(null, "", newUrl);
+			set({
+				searchParams: params
+			})
+		},
 
 		// === ПЕРВАЯ ЗАГРУЗКА ===
 		getSearchResults: async () => {
@@ -134,15 +133,15 @@ export const useArticleSearch = create<SearchStore>()(
 				}
 
 				// → Всегда ставим limit = 50
-                                const params = buildSearchQueryParams(searchParams, 0, 50);
+				const params = buildSearchQueryParams(searchParams, 0, 10);
 
-                                const { data } = await api.get<IArticleCard[]>(
-                                        `/v1/articles/search`,
-                                        {
-                                                params,
-                                                paramsSerializer: (params) => params.toString(),
-                                        }
-                                );
+				const { data } = await api.get<IArticleCard[]>(
+					`/v1/articles/search`,
+					{
+						params,
+						paramsSerializer: (params) => params.toString(),
+					}
+				);
 
 				const unique = filterUniqueArticles(data);
 
@@ -208,15 +207,15 @@ export const useArticleSearch = create<SearchStore>()(
 				}
 
 				// → limit = 50 всегда
-                                const params = buildSearchQueryParams(searchParams, offset, 50);
+				const params = buildSearchQueryParams(searchParams, offset, 10);
 
-                                const { data } = await api.get<IArticleCard[]>(
-                                        `/v1/articles/search`,
-                                        {
-                                                params,
-                                                paramsSerializer: (params) => params.toString(),
-                                        }
-                                );
+				const { data } = await api.get<IArticleCard[]>(
+					`/v1/articles/search`,
+					{
+						params,
+						paramsSerializer: (params) => params.toString(),
+					}
+				);
 
 				const merged = filterUniqueArticles([
 					...searchResults.articles,
@@ -294,7 +293,7 @@ export function convertURLParamsToRecord(params : SearchParams) {
                 .filter(Boolean);
 
         return {
-                search_text: params.text?.trim() || undefined,
+                search_text: params.search_text?.trim() || undefined,
                 tags: cleanedTags.length ? cleanedTags : undefined,
                 date: params.date !== undefined ? dateMap[params.date] ?? undefined : undefined,
                 source: params.sourceType !== undefined ? sourceMap[params.sourceType] ?? undefined : undefined,
