@@ -162,14 +162,6 @@ export default function AuthForm() {
 							Зарегистрироваться
 						</Button>
 					</Link>
-					<div className="flex w-full justify-center items-center gap-2">
-						<div className={'w-[40%] h-[1px] bg-gray-300'}></div>
-						<div className="mx-4 mt-[-4px]">или</div>
-						<div className={'w-[40%] h-[1px] bg-gray-300'}></div>
-					</div>
-
-
-					<YandexButton />
 				</CardFooter>
 			</Card>
 		</div>
