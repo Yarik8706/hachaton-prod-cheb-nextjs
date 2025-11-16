@@ -46,7 +46,7 @@ export function ArticleFilterSheet({ onSubmit, currentText }: IProps) {
 
   const [sourceType, setSourceType] =
     useState<string>(() => {
-      const urlSource = searchParams.get('sourceType');
+      const urlSource = searchParams.get('source');
       return urlSource ? String(urlSource) : "";
     });
 
