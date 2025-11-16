@@ -99,7 +99,7 @@ export default function ArticlePage() {
 
 			{/* Заголовок */}
 			<h1 className="text-3xl font-semibold mb-5 leading-snug">
-				{article.title}
+				{article.title}  
 			</h1>
 
 			{/* Дата + источник */}
