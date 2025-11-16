@@ -13,7 +13,7 @@ import { useAuth } from "@/providers/AuthProvider";
 export const Intro = () => {
   const [mounted, setMounted] = useState(false);
   const isMobile = useMediaQuery(`(max-width: ${layoutConfig.maxMobileWidth})`);
-  const token = useAuth();
+  const { isAuth } = useAuth();
   const firstSectionRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
@@ -77,21 +77,31 @@ export const Intro = () => {
         <div className="h-full md:pt-12 w-full">
           <div
             id="intro"
-            className="mx-auto md:mr-auto py-24 w-full flex flex-col justify-between md:h-auto gap-12 h-full rounded-3xl px-2 md:px-32 dark:bg-gray-800/70"
+            className="mx-auto md:mr-auto py-24 w-full flex flex-col justify-between md:h-auto gap-12 h-full rounded-3xl px-2 md:px-16 dark:bg-gray-800/70"
           >
             <span className="inline-block rounded-full bg-[var(--main-color)]/60 px-4 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-regular-text-color">
               Стартуем вместе
             </span>
             <h1 className="text-5xl font-semibold text-regular-text-color sm:text-5xl md:mx-4">
-              Добро пожаловать в {siteConfig.title}
+              Добро пожаловать в <br/>
+              {siteConfig.title}
             </h1>
             <p className="text-base leading-relaxed text-gray-600 dark:text-gray-200">
               Здесь вы сможете исследовать демо-сервис, попробовать регистрацию и авторизацию, а затем продолжить работу
               над своими проектами в комфортном темпе.
             </p>
-            <Link href={token ? "/home" : "/register"}>
-              <Button>{token ? "Перейти в каталог" : "Создать аккаунт"}</Button>
-            </Link>
+            {isAuth ? <Link href={"/home"}>
+              <Button>Перейти в каталог</Button>
+            </Link> :
+              <div className={"flex gap-2"}>
+                <Link href={"/register"}>
+                  <Button>{"Создать аккаунт"}</Button>
+                </Link>
+                <Link href={"/login"}>
+                  <Button variant="secondary">{"Войти"}</Button>
+                </Link>
+              </div>}
+            
           </div>
         </div>
       </section>
@@ -113,9 +123,17 @@ export const Intro = () => {
             ))}
           </div>
           <div className="w-full flex justify-center">
-            <Link href={token ? "/home" : "/register"}>
-              <Button>{token ? "Перейти в каталог" : "Попробовать"}</Button>
-            </Link>
+            {isAuth ? <Link href={"/home"}>
+                <Button>Перейти в каталог</Button>
+              </Link> :
+              <div className={"flex gap-2"}>
+                <Link href={"/register"}>
+                  <Button>{"Создать аккаунт"}</Button>
+                </Link>
+                <Link href={"/login"}>
+                  <Button variant="secondary">{"Войти"}</Button>
+                </Link>
+              </div>}
           </div>
         </div>
       </section>

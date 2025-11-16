@@ -108,7 +108,7 @@ export default function HomePage() {
       const fullHeight = document.body.offsetHeight;
 
       if (fullHeight - scrollPosition < 250 && !isLoading && searchResults != undefined
-        && searchResults?.articles.length % 10 == 0) {
+        && searchResults?.articles.length > 10) {
         setLoadNextArticles(true)
         loadMore();
       }
