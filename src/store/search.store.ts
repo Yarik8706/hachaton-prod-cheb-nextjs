@@ -145,7 +145,7 @@ export const useArticleSearch = create<SearchStore>()(
 				}
 
 				// → Всегда ставим limit = 50
-				const params = buildSearchQueryParams(searchParams, 0, 10);
+				const params = buildSearchQueryParams(searchParams, 0, 50);
 
 				const { data } = await api.get<IArticleCard[]>(
 					`/v1/articles/search`,
@@ -219,7 +219,7 @@ export const useArticleSearch = create<SearchStore>()(
 				}
 
 				// → limit = 50 всегда
-				const params = buildSearchQueryParams(searchParams, offset, 10);
+				const params = buildSearchQueryParams(searchParams, offset, 50);
 
 				const { data } = await api.get<IArticleCard[]>(
 					`/v1/articles/search`,

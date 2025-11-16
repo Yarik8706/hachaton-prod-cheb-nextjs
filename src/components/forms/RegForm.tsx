@@ -76,7 +76,10 @@ export default function RegForm() {
 	})
 
 	async function onSubmit(data: z.infer<typeof formSchema>) {
-		if (interests.length === 0) setInterestsValidate(true)
+		if (interests.length === 0) {
+			setInterestsValidate(true)
+			return
+		}
 		await registerFn(data)
 			.then(response => {
 				const accessToken = response.data.access;

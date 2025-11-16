@@ -8,6 +8,7 @@ import { useEffect, useState } from "react";
 import { IArticle } from "@/store/types";
 import Link from "next/link";
 import { Skeleton } from "@/components/ui/skeleton";
+import MarkdownIt from "markdown-it";
 
 import {
 	Accordion,
@@ -16,9 +17,12 @@ import {
 	AccordionTrigger,
 } from "@/components/ui/accordion";
 
+import { renderMarkdown } from "@/utils/markdown"; // <-- Markdown → HTML
+
 export default function ArticlePage() {
 	const { id } = useParams();
 	const { getArticleById, isLoading } = useArticleSearch();
+	const md = new MarkdownIt();
 
 	const {
 		getArticleSummary,
@@ -40,21 +44,16 @@ export default function ArticlePage() {
 			}
 
 			setArticle(a);
-
-			getArticleSummary(a.id).catch((e) => {
-				console.log(e);
-			});
+			getArticleSummary(a.id).catch((e) => console.log(e));
 		});
 	}, []);
 
-	// Авто-открытие summary
+	// Авто-раскрытие аккордиона после загрузки summary
 	useEffect(() => {
-		if (!isSummaryLoading && summary) {
-			setAccordionValue("summary");
-		}
+		if (!isSummaryLoading && summary) setAccordionValue("summary");
 	}, [isSummaryLoading, summary]);
 
-	// ====== Скелетон ======
+	// Скелетон
 	if (isLoading && !article && !notFound) {
 		return (
 			<div className="w-full max-w-3xl mx-auto pt-10 px-4 space-y-6">
@@ -69,7 +68,6 @@ export default function ArticlePage() {
 		);
 	}
 
-	// ====== Not found ======
 	if (notFound) {
 		return (
 			<div className="w-full max-w-3xl mx-auto pt-10 px-4">
@@ -91,7 +89,7 @@ export default function ArticlePage() {
 
 	return (
 		<div className="w-full max-w-3xl mx-auto pt-10 px-4">
-			{/* ===== Навигация ===== */}
+			{/* Навигация */}
 			<div className="text-sm text-gray-500 mb-6">
 				<Link href="/home" className="hover:underline text-blue-600">
 					Home
@@ -99,12 +97,12 @@ export default function ArticlePage() {
 				<span className="text-gray-700">Article</span>
 			</div>
 
-			{/* ===== Заголовок ===== */}
+			{/* Заголовок */}
 			<h1 className="text-3xl font-semibold mb-5 leading-snug">
 				{article.title}
 			</h1>
 
-			{/* ===== Дата и источник ===== */}
+			{/* Дата + источник */}
 			<div className="text-gray-500 text-sm mb-8">
 				{new Date(article.creation_date).toLocaleDateString("ru-RU")}
 				{" • "}
@@ -116,19 +114,19 @@ export default function ArticlePage() {
 				</a>
 			</div>
 
-			{/* ===== Теги ===== */}
+			{/* Теги */}
 			<div className="flex flex-wrap gap-2 my-4">
 				{article.tags.map((tag) => (
 					<span
 						key={tag}
 						className="px-3 py-1 bg-gray-300 text-gray-700 text-sm rounded-full"
 					>
-            {tag}
-          </span>
+						{tag}
+					</span>
 				))}
 			</div>
 
-			{/* ===== Summary ===== */}
+			{/* Summary от ИИ */}
 			<Accordion
 				type="single"
 				collapsible
@@ -161,19 +159,26 @@ export default function ArticlePage() {
 							</div>
 						)}
 
-						{/* Summary */}
+						{/* Markdown summary */}
 						{!isSummaryLoading && summary && (
-							<div className="text-gray-800 text-[15px] leading-relaxed mt-2 whitespace-pre-line">
-								{summary}
-							</div>
+								<div
+									className="prose prose-gray max-w-none text-[15px] leading-relaxed mt-2"
+									dangerouslySetInnerHTML={{
+										__html: md.render(summary),   // <-- простое отображение markdown
+									}}
+								/>
 						)}
 					</AccordionContent>
 				</AccordionItem>
 			</Accordion>
-			
-			<div className="prose prose-gray max-w-none text-[16px] leading-relaxed whitespace-pre-line"
-					 dangerouslySetInnerHTML={{ __html: article.text }}>
-			</div>
+
+			{/* Полный текст статьи (уже HTML) */}
+			<div
+				className="prose prose-gray max-w-none text-[16px] leading-relaxed"
+				dangerouslySetInnerHTML={{
+					__html: article.text,
+				}}
+			/>
 		</div>
 	);
 }

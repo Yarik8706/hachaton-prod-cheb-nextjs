@@ -87,8 +87,7 @@ export const Intro = () => {
               {siteConfig.title}
             </h1>
             <p className="text-base leading-relaxed text-gray-600 dark:text-gray-200">
-              Здесь вы сможете исследовать демо-сервис, попробовать регистрацию и авторизацию, а затем продолжить работу
-              над своими проектами в комфортном темпе.
+              {siteConfig.description}
             </p>
             {isAuth ? <Link href={"/home"}>
               <Button>Перейти в каталог</Button>
