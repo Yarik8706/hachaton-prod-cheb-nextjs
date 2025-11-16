@@ -77,7 +77,7 @@ export default function ArticlePage() {
 					<Link href="/home" className="hover:underline text-blue-600">
 						Home
 					</Link>{" "}
-					> <span className="text-gray-700">Article</span>
+					<span className="text-gray-700">Article</span>
 				</div>
 
 				<div className="text-center text-xl text-gray-600">
@@ -96,7 +96,7 @@ export default function ArticlePage() {
 				<Link href="/home" className="hover:underline text-blue-600">
 					Home
 				</Link>{" "}
-				> <span className="text-gray-700">Article</span>
+				<span className="text-gray-700">Article</span>
 			</div>
 
 			{/* ===== Заголовок ===== */}
