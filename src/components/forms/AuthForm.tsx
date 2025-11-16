@@ -83,9 +83,9 @@ export default function AuthForm() {
 
 		if (code) {
 			api
-				.post('/auth/get_token', { code })
+				.post('/v1/auth/yandex/authorize', { code })
 				.then(res => {
-					localStorage.setItem('access_token', res.data.access_token)
+					localStorage.setItem('access_token', res.data.access)
 					push('/')
 				})
 				.catch(err => console.error('Ошибка авторизации:', err))
@@ -162,6 +162,14 @@ export default function AuthForm() {
 							Зарегистрироваться
 						</Button>
 					</Link>
+					<div className="flex w-full justify-center items-center gap-2">
+						<div className={'w-[40%] h-[1px] bg-gray-300'}></div>
+						<div className="mx-4 mt-[-4px]">или</div>
+						<div className={'w-[40%] h-[1px] bg-gray-300'}></div>
+					</div>
+
+
+					<YandexButton />
 				</CardFooter>
 			</Card>
 		</div>
