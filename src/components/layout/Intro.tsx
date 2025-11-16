@@ -108,11 +108,10 @@ export const Intro = () => {
       <section id="first-section" className="section p-4 flex items-center py-12" ref={firstSectionRef}>
         <div className="h-[70vh] flex justify-between flex-col">
           <h1 className="text-4xl font-semibold text-regular-text-color sm:text-5xl mt-12">
-            Text Text Text Text
+            {siteConfig.title}
           </h1>
           <p className="text-base leading-relaxed text-gray-600 dark:text-gray-200 mt-6">
-            Здесь вы сможете исследовать демо-сервис, попробовать регистрацию и авторизацию, а затем продолжить работу
-            над своими проектами в комфортном темпе.
+            Наше приложение:
           </p>
           <div className="flex flex-col gap-4 md:gap-8 mt-4 w-full">
             {siteConfig.firstSectionItems.map((item, index) => (
