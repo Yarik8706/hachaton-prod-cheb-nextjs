@@ -23,7 +23,7 @@ export interface SearchParams {
         search_text: string | undefined;
         tags: string[] | undefined;
         date: DateSearchPeriod | undefined;
-        sourceType: string | undefined;
+        source: string | undefined;
 }
 
 interface SearchStore {
@@ -91,9 +91,9 @@ export const useArticleSearch = create<SearchStore>()(
 				search.set("date", cleaned.date);
 			}
 
-			if (cleaned.sourceType) {
+			if (cleaned.source) {
 				search.delete("source");
-				search.set("source", cleaned.sourceType);
+				search.set("source", cleaned.source);
 			}
 
 			if (cleaned.tags) search.delete("tags");
@@ -309,7 +309,7 @@ export function convertURLParamsToRecord(params : SearchParams) {
                 search_text: params.search_text?.trim() || undefined,
                 tags: cleanedTags.length ? cleanedTags : undefined,
                 date: params.date !== undefined ? dateMap[params.date] ?? undefined : undefined,
-                source: params.sourceType !== undefined ? sourceMap[params.sourceType] ?? undefined : undefined,
+                source: params.source !== undefined ? sourceMap[params.source] ?? undefined : undefined,
         }
 }
 

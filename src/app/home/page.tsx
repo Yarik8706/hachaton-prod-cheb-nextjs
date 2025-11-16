@@ -171,7 +171,7 @@ export default function HomePage() {
       search_text: "",
       tags: [],
       date: DateSearchPeriod.none,
-      sourceType: "",
+      source: "",
     } as SearchParams)
     handleFiltersSubmit()
   }
