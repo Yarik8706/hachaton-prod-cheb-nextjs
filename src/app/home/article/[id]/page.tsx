@@ -16,8 +16,6 @@ import {
 	AccordionTrigger,
 } from "@/components/ui/accordion";
 
-import { renderMarkdown } from "@/utils/markdown"; // <-- Markdown → HTML
-
 export default function ArticlePage() {
 	const { id } = useParams();
 	const { getArticleById, isLoading } = useArticleSearch();
@@ -31,7 +29,6 @@ export default function ArticlePage() {
 	const [article, setArticle] = useState<IArticle | null>(null);
 	const [notFound, setNotFound] = useState(false);
 
-	const [markdownHtml, setMarkdownHtml] = useState("");
 	const [accordionValue, setAccordionValue] = useState<string>("");
 
 	// Загрузка статьи
@@ -43,13 +40,10 @@ export default function ArticlePage() {
 			}
 
 			setArticle(a);
-			getArticleSummary(a.id).catch(e => {
+
+			getArticleSummary(a.id).catch((e) => {
 				console.log(e);
 			});
-
-			// Markdown обработка
-			const rendered = await renderMarkdown(a.text);
-			setMarkdownHtml(rendered);
 		});
 	}, []);
 
@@ -82,9 +76,8 @@ export default function ArticlePage() {
 				<div className="text-sm text-gray-500 mb-6">
 					<Link href="/home" className="hover:underline text-blue-600">
 						Home
-					</Link>
-					{" > "}
-					<span className="text-gray-700">Article</span>
+					</Link>{" "}
+					> <span className="text-gray-700">Article</span>
 				</div>
 
 				<div className="text-center text-xl text-gray-600">
@@ -98,14 +91,12 @@ export default function ArticlePage() {
 
 	return (
 		<div className="w-full max-w-3xl mx-auto pt-10 px-4">
-
 			{/* ===== Навигация ===== */}
 			<div className="text-sm text-gray-500 mb-6">
 				<Link href="/home" className="hover:underline text-blue-600">
 					Home
-				</Link>
-				{" > "}
-				<span className="text-gray-700">Article</span>
+				</Link>{" "}
+				> <span className="text-gray-700">Article</span>
 			</div>
 
 			{/* ===== Заголовок ===== */}
@@ -117,11 +108,16 @@ export default function ArticlePage() {
 			<div className="text-gray-500 text-sm mb-8">
 				{new Date(article.creation_date).toLocaleDateString("ru-RU")}
 				{" • "}
-				<a className="text-blue-600 break-all cursor-pointer" href={article.source}>{article.source}</a>
+				<a
+					className="text-blue-600 break-all cursor-pointer"
+					href={article.source}
+				>
+					{article.source}
+				</a>
 			</div>
-			
+
 			{/* ===== Теги ===== */}
-			<div className="flex flex-wrap gap-2 mt-8">
+			<div className="flex flex-wrap gap-2 my-4">
 				{article.tags.map((tag) => (
 					<span
 						key={tag}
@@ -132,7 +128,7 @@ export default function ArticlePage() {
 				))}
 			</div>
 
-			{/* ====== Summary ====== */}
+			{/* ===== Summary ===== */}
 			<Accordion
 				type="single"
 				collapsible
@@ -155,7 +151,6 @@ export default function ArticlePage() {
 					</AccordionTrigger>
 
 					<AccordionContent className="pb-4 pt-1">
-
 						{/* Скелетон */}
 						{isSummaryLoading && (
 							<div className="space-y-3 mt-2">
@@ -172,16 +167,14 @@ export default function ArticlePage() {
 								{summary}
 							</div>
 						)}
-
 					</AccordionContent>
 				</AccordionItem>
 			</Accordion>
 
-			{/* ===== Основной текст (Markdown) ===== */}
-			<div
-				className="prose prose-gray max-w-none text-[16px] leading-relaxed"
-				dangerouslySetInnerHTML={{ __html: markdownHtml }}
-			/>
+			{/* ===== Основной текст — без markdown ===== */}
+			<div className="prose prose-gray max-w-none text-[16px] leading-relaxed whitespace-pre-line">
+				{article.text}
+			</div>
 		</div>
 	);
 }
