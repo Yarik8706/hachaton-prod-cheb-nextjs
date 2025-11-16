@@ -93,7 +93,7 @@ export default function ArticlePage() {
 			<div className="text-sm text-gray-500 mb-6">
 				<Link href="/home" className="hover:underline text-blue-600">
 					Home
-				</Link>{" "}
+				</Link>{" > "}
 				<span className="text-gray-700">Article</span>
 			</div>
 
