@@ -170,10 +170,9 @@ export default function ArticlePage() {
 					</AccordionContent>
 				</AccordionItem>
 			</Accordion>
-
-			{/* ===== Основной текст — без markdown ===== */}
-			<div className="prose prose-gray max-w-none text-[16px] leading-relaxed whitespace-pre-line">
-				{article.text}
+			
+			<div className="prose prose-gray max-w-none text-[16px] leading-relaxed whitespace-pre-line"
+					 dangerouslySetInnerHTML={{ __html: article.text }}>
 			</div>
 		</div>
 	);
