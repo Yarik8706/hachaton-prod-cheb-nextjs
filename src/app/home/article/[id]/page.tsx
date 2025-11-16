@@ -43,7 +43,9 @@ export default function ArticlePage() {
 			}
 
 			setArticle(a);
-			getArticleSummary(a.text);
+			getArticleSummary(a.id).catch(e => {
+				console.log(e);
+			});
 
 			// Markdown обработка
 			const rendered = await renderMarkdown(a.text);

@@ -1,4 +1,4 @@
-﻿import { create } from "zustand";
+import { create } from "zustand";
 import { devtools } from "zustand/middleware";
 import { api } from "@/api/api";
 import { IArticle, IArticleCard, ISearchResult } from '@/store/types'
@@ -302,25 +302,27 @@ export function convertURLParamsToRecord(params : SearchParams) {
 }
 
 function buildSearchQueryParams(params: SearchParams | null, offset: number, limit: number) {
-        const search = new URLSearchParams();
-        const cleaned = params ? convertURLParamsToRecord(params) : {};
+	const search = new URLSearchParams();
+	const cleaned = params ? convertURLParamsToRecord(params) : {} as Record<string, any>;
 
-        if (cleaned.search_text) {
-                search.set("search_text", cleaned.search_text);
-        }
 
-        if (cleaned.date) {
-                search.set("date", cleaned.date);
-        }
+	if (cleaned.search_text) {
+		search.set("search_text", cleaned.search_text);
+	}
 
-        if (cleaned.source) {
-                search.set("source", cleaned.source);
-        }
+	if (cleaned.date) {
+		search.set("date", cleaned.date);
+	}
 
-        cleaned.tags?.forEach(tag => search.append("tags", tag));
+	if (cleaned.source) {
+		search.set("source", cleaned.source);
+	}
 
-        search.set("offset", String(offset));
-        search.set("limit", String(limit));
+	cleaned.tags?.forEach(tag => search.append("tags", tag));
 
-        return search;
+	search.set("offset", String(offset));
+	search.set("limit", String(limit));
+
+
+	return search;
 }

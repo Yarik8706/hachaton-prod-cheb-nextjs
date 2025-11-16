@@ -170,12 +170,14 @@ export default function HomePage() {
 
   const filteredHistory = searchingHistory?.filter(v =>
     v.toLowerCase().includes(searchText.toLowerCase())
+    && v.toLowerCase() != searchText.toLowerCase()
   )
 
   const showSkeleton = (searching || isLoading) && !loadNextArticles
-
-  console.log("articles len " + searchResults?.articles.length)
-  console.log(searchResults?.articles)
+  console.log("show skeleton: " + showSkeleton)
+  console.log("searching: " + searching)
+  console.log("isLoading: " + isLoading)
+  console.log("loadNextArticles: " + loadNextArticles)
 
   return (
     <div className="w-full flex flex-col px-4 pt-6 pb-20 space-y-1 min-h-screen">

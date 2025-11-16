@@ -35,3 +35,107 @@ input {
 button {
     cursor: pointer;
 }
+
+/* ======== Заголовки ======== */
+.prose h1,
+.prose h2,
+.prose h3,
+.prose h4 {
+    font-weight: 600;
+    scroll-margin-top: 80px;
+}
+
+.prose h1 {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+}
+
+.prose h2 {
+    font-size: 1.6rem;
+    margin-top: 2.2rem;
+    margin-bottom: 0.8rem;
+    border-bottom: 1px solid #e5e7eb;
+    padding-bottom: 0.3rem;
+}
+
+.prose h3 {
+    font-size: 1.35rem;
+    margin-top: 1.8rem;
+    margin-bottom: 0.6rem;
+    color: #1f2937;
+}
+
+.prose h4 {
+    font-size: 1.15rem;
+    margin-top: 1.2rem;
+    margin-bottom: 0.4rem;
+    color: #374151;
+}
+
+/* ======== Абзацы ======== */
+.prose p {
+    line-height: 1.7;
+    margin-top: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+/* ======== Blockquote ======== */
+.prose blockquote {
+    border-left: 4px solid #3b82f6;
+    padding-left: 1rem;
+    font-style: italic;
+    color: #555;
+    background-color: #f8fafc;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+    border-radius: 0.25rem;
+}
+
+/* ======== Списки ======== */
+.prose ul li,
+.prose ol li {
+    margin-top: 0.35rem;
+    margin-bottom: 0.35rem;
+}
+
+/* ======== Таблицы ======== */
+.prose table {
+    border-collapse: collapse;
+    width: 100%;
+    font-size: 0.95rem;
+    margin-top: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.prose th {
+    border: 1px solid #e5e7eb;
+    padding: 8px 12px;
+    background-color: #f3f4f6;
+    font-weight: 600;
+}
+
+.prose td {
+    border: 1px solid #e5e7eb;
+    padding: 8px 12px;
+}
+
+.prose tbody tr:nth-child(odd) td {
+    background-color: #fafafa;
+}
+
+/* ======== Code ======== */
+.prose code {
+    background-color: #f3f4f6;
+    padding: 2px 4px;
+    border-radius: 4px;
+    font-size: 0.85rem;
+}
+
+.prose pre {
+    background: #1f2937 !important;
+    color: #f9fafb !important;
+    padding: 1rem;
+    border-radius: 8px;
+    overflow-x: auto;
+    line-height: 1.6;
+}

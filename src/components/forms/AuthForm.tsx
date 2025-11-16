@@ -13,8 +13,8 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation } from '@tanstack/react-query'
 import { ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import { useState } from 'react'
+import { useParams, useRouter, useSearchParams } from 'next/navigation'
+import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 import { z } from 'zod'
@@ -35,6 +35,7 @@ const formSchema = z.object({
 export default function AuthForm() {
 	const { push } = useRouter()
 	const { setToken, tokenUpdate } = useAuth()
+	const params = useSearchParams()
 	const [error, setError] = useState<string | null>(null)
 
 	const form = useForm<z.infer<typeof formSchema>>({
@@ -76,6 +77,20 @@ export default function AuthForm() {
 				}
 			})
 	}
+
+	useEffect(() => {
+		const code = params.get('code')
+
+		if (code) {
+			api
+				.post('/auth/get_token', { code })
+				.then(res => {
+					localStorage.setItem('access_token', res.data.access_token)
+					push('/')
+				})
+				.catch(err => console.error('Ошибка авторизации:', err))
+		}
+	}, [params, push])
 
 	return (
 		<div className='px-2 w-full md:w-auto'>
