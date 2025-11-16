@@ -313,18 +313,16 @@ export default function HomePage() {
                    border border-gray-200 p-5">
 
                 <div className="flex gap-2">
-                  {item.tags.map((tag, idx) => {
-                    return (
-                      <div
-                        key={idx}
-                        className="inline-block bg-gray-100 text-gray-700 text-xs px-3 py-1 rounded-full mb-3"
-                      >
-                        {tag}
-                      </div>
-                    )
-                  })
-                  }
+                  {Array.isArray(item.tags) && item.tags.slice(0, 3).map((tag, idx) => (
+                    <div
+                      key={idx}
+                      className="inline-block bg-gray-100 text-gray-700 text-xs px-3 py-1 rounded-full mb-3"
+                    >
+                      {tag}
+                    </div>
+                  ))}
                 </div>
+
 
                 <h2 className="font-semibold text-[17px] leading-snug">
                   {item.title}
