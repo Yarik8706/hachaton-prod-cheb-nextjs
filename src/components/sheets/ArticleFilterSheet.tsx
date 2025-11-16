@@ -96,7 +96,7 @@ export function ArticleFilterSheet({ onSubmit, currentText }: IProps) {
         </a>
       </SheetTrigger>
 
-      <SheetContent side="right" className="w-[90vw] sm:w-[380px]">
+      <SheetContent side="right" className="w-[90vw] sm:w-[100%] sm:right-0">
         <SheetHeader>
           <SheetTitle>Фильтры</SheetTitle>
         </SheetHeader>
